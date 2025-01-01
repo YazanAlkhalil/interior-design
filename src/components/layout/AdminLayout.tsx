@@ -20,6 +20,7 @@ const navItems = {
     { name: "Sections", href: "/admin/sections" },
     { name: "Plans", href: "/admin/plans" },
     { name: "Orders", href: "/admin/orders" },
+    { name: "Departments", href: "/admin/departments" },
   ]
 }
 

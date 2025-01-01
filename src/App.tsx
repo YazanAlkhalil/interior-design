@@ -28,9 +28,11 @@ import EmailForPasswordReset from './pages/EmailForPasswordReset';
 import ResetPasswordOTP from './pages/ResetPasswordOTP';
 import ResetPassword from './pages/ResetPassword';
 import ProtectedRoute from './components/ProtectedRoute';
+import Departments from './pages/admin/Departments';
+import Employees from './pages/admin/Employees';
 
 function App() {
-  const isAdmin = localStorage.getItem('role') === "DEVELOPER";
+  const isAdmin = localStorage.getItem('role') === "ADMIN";
 
   return (
     <>
@@ -67,6 +69,9 @@ function App() {
               <Route path="sections" element={<AdminSections />} />
               <Route path="plans" element={<Plans />} />
               <Route path="orders" element={<OrdersManagement />} />
+              <Route path="departments" element={<Departments />} />
+              <Route path="employees" element={<Employees/>} />
+              
             </Route>
           </Route>
         </Routes>

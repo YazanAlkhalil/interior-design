@@ -201,6 +201,7 @@ export default function Sections() {
       setSelectedImage(null);
       setEditingSection(null);
       setIsEditingSectionOpen(false);
+      
     } catch (error) {
       console.error('Error updating section:', error);
       // You might want to show an error message to the user here
@@ -259,6 +260,7 @@ export default function Sections() {
       setEditCategoryImagePreview(null);
       setEditingCategory(null);
       setIsEditingCategoryOpen(false);
+      
     } catch (error) {
       console.error('Error updating category:', error);
     }
@@ -272,65 +274,65 @@ export default function Sections() {
     );
   };
 
-  useEffect(() => {
-    const getSections = async () => {
-      setIsLoading(true);
-      try {
-        const res = await authFetch(`sections/?page=${currentPage}&page_size=${pageSize}`);
-        if(res.ok) {
-          const data: PaginatedResponse = await res.json();
-          
-          // First set the sections without categories for immediate display
-          const sectionsWithoutCategories = data.results.map(section => ({
-            id: section.id,
-            uuid: section.uuid,
-            title: section.title,
-            description: section.description,
-            image: section.image,
-            categories: []
-          }));
-          
-          setSections(sectionsWithoutCategories);
-          setIsLoading(false);
-          
-          // Then fetch categories for each section
-          sectionsWithoutCategories.forEach(async (section) => {
-            setIsCategoriesLoading(prev => ({ ...prev, [section.id]: true }));
-            try {
-              const categoryRes = await authFetch(`category/?section_title=${section.title}`);
-              const categoriesData = await categoryRes.json();
-              const categories = categoriesData.categories || [];
-              
-              setSections(currentSections => 
-                currentSections.map(s => 
-                  s.id === section.id 
-                    ? {
-                        ...s,
-                        categories: categories.map((cat: any) => ({
-                          uuid: cat.uuid,
-                          name: cat.title,
-                          image: cat.image,
-                          description: cat.description,
-                          section: cat.section
-                        }))
-                      }
-                    : s
-                )
-              );
-            } finally {
-              setIsCategoriesLoading(prev => ({ ...prev, [section.id]: false }));
-            }
-          });
-
-          setTotalPages(Math.ceil(data.count / pageSize));
-          setNextPage(data.next);
-          setPrevPage(data.previous);
-        }
-      } catch (error) {
-        console.error('Error fetching sections:', error);
+  const getSections = async () => {
+    setIsLoading(true);
+    try {
+      const res = await authFetch(`sections/?page=${currentPage}&page_size=${pageSize}`);
+      if(res.ok) {
+        const data: PaginatedResponse = await res.json();
+        
+        // First set the sections without categories for immediate display
+        const sectionsWithoutCategories = data.results.map(section => ({
+          id: section.id,
+          uuid: section.uuid,
+          title: section.title,
+          description: section.description,
+          image: section.image,
+          categories: []
+        }));
+        
+        setSections(sectionsWithoutCategories);
         setIsLoading(false);
+        
+        // Then fetch categories for each section
+        sectionsWithoutCategories.forEach(async (section) => {
+          setIsCategoriesLoading(prev => ({ ...prev, [section.id]: true }));
+          try {
+            const categoryRes = await authFetch(`category/?section_title=${section.title}`);
+            const categoriesData = await categoryRes.json();
+            const categories = categoriesData.categories || [];
+            
+            setSections(currentSections => 
+              currentSections.map(s => 
+                s.id === section.id 
+                  ? {
+                      ...s,
+                      categories: categories.map((cat: any) => ({
+                        uuid: cat.uuid,
+                        name: cat.title,
+                        image: cat.image,
+                        description: cat.description,
+                        section: cat.section
+                      }))
+                    }
+                  : s
+              )
+            );
+          } finally {
+            setIsCategoriesLoading(prev => ({ ...prev, [section.id]: false }));
+          }
+        });
+
+        setTotalPages(Math.ceil(data.count / pageSize));
+        setNextPage(data.next);
+        setPrevPage(data.previous);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching sections:', error);
+      setIsLoading(false);
+    }
+  };
+  useEffect(() => {
     getSections();
   }, [currentPage]);
 
@@ -375,13 +377,16 @@ export default function Sections() {
         throw new Error('Failed to create category');
       }
 
-      const newCategory = await response.json();
+      
       
       // Reset the form
       setNewCategoryTitle('');
       setNewCategoryImage(null);
       setNewCategoryImagePreview(null);
       setAddingCategoryToSection(null);
+      setIsEditingCategoryOpen(false)
+
+      getSections()
     } catch (error) {
       console.error('Error creating category:', error);
     }

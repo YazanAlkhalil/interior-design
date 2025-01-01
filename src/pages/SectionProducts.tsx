@@ -3,45 +3,65 @@ import { Card, CardContent, CardFooter, CardHeader } from "../components/ui/card
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Product } from "../components/shared/Product";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TopProducts } from "../components/shared/TopProduct";
-
-// Mock data - you can replace this with your actual data
-const categories = ["All", "Modern", "Classic", "Contemporary", "Minimalist"];
-
-const products = [
-  {
-    id: "1",
-    name: "Modern Chair",
-    price: 299.99,
-    image: require("../assets/images/images (2).jpeg"),
-    rating: 4,
-    category: "Modern"
-  },
-  {
-    id: "1",
-    name: "Modern Chair",
-    price: 299.99,
-    image: require("../assets/images/images (2).jpeg"),
-    rating: 4,
-    category: "Modern"
-  },
-  // Add more products...
-];
+import { useAuthenticatedFetch } from "../hooks/useAuthenticatedFetch";
 
 const SectionProducts = () => {
   const { sectionId } = useParams();
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [categories, setCategories] = useState<Array<{uuid: string, title: string, section:string}>>([]);
+  const [products, setProducts] = useState<Array<any>>([]);
+  const [sectionTitle, setSectionTitle] = useState("");
+  const { authFetch } = useAuthenticatedFetch();
+  
+  const filteredProducts = products;
+  const formatSectionTitle = (title: string) => {
+    return decodeURIComponent(title || '');
+  };
 
-  const filteredProducts = products.filter(product => 
-    selectedCategory === "All" || product.category === selectedCategory
-  );
+
+
+  const getProducts = async () => {
+    const categoryQuery = selectedCategory === "all" 
+      ? "" 
+      : `category=${selectedCategory}`;
+    const res = await authFetch(`products/?section=${sectionId}&${categoryQuery}`);
+    const data = await res.json();
+    setProducts(data.results || []);
+  }
+
+  
+  const getCategories = async () => {
+    const sectionRes = await authFetch(`sections/${sectionId}`);
+    const sectionData = await sectionRes.json();
+    setSectionTitle(sectionData.title);
+    
+
+    const res = await authFetch(`category/?section_title=${encodeURIComponent(sectionData.title)}`);
+    let apiCategories = await res.json();
+    apiCategories = apiCategories.categories;
+    setCategories([
+      { uuid: 'all', title: 'All' },
+      ...apiCategories
+    ]);
+  }
+  
+  const getData = async ()=> {
+   await getCategories();
+    getProducts();
+  }
+  useEffect(() => {
+    getData()
+  }, [selectedCategory]);
 
   return (
     <div className="container mx-auto py-8">
       <div className="space-y-8">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">{sectionId} Products</h1>
+          <h1 className="text-3xl font-bold">
+            {formatSectionTitle(sectionTitle ?? '')} Products
+          </h1>
           <Select
             value={selectedCategory}
             onValueChange={setSelectedCategory}
@@ -51,8 +71,8 @@ const SectionProducts = () => {
             </SelectTrigger>
             <SelectContent>
               {categories.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
+                <SelectItem key={category.uuid} value={category.uuid}>
+                  {category.title}
                 </SelectItem>
               ))}
             </SelectContent>

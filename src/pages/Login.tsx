@@ -32,7 +32,7 @@ export default function Login() {
       localStorage.setItem('refresh', data.refresh);
       localStorage.setItem('role', data.role);
       
-      if(data.role === 'DEVELOPER') {
+      if(data.role === 'ADMIN') {
         console.log('developer');
         return navigate('/admin/overview');
       } else {
@@ -43,6 +43,11 @@ export default function Login() {
     } catch (error) {
       toast.error('Login failed. Please try again.');
     }
+  };
+
+  const handleGuestAccess = () => {
+    localStorage.setItem('role', 'GUEST');
+    navigate('/home');
   };
 
   return (
@@ -86,10 +91,19 @@ export default function Login() {
             >
               Sign In
             </Button>
+            <Button 
+              type="button"
+              
+              variant="outline"
+              className="w-full border-primary text-primary hover:bg-primary/10"
+              onClick={handleGuestAccess}
+            >
+              Continue as Guest
+            </Button>
             <div className="w-full text-center">
-            Need an account?{' '}
+              Need an account?{' '}
               <Link to="/signup" className="text-[#95714f] hover:underline">
-              Sign up
+                Sign up
               </Link>
             </div>
           </CardFooter>

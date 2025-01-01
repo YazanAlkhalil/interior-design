@@ -9,60 +9,80 @@ import {
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Star, Minus, Plus, ShoppingCart } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useCart } from "../context/CartContext";
+import { useAuthenticatedFetch } from "../hooks/useAuthenticatedFetch";
 
-interface ColorVariant {
-  color: string;
-  price: number;
-  quantity: number;
-  colorCode: string;
+interface Color {
+  uuid: string;
+  hex_code: string;
 }
 
-// Mock data - replace with your actual data
-const productData = {
-  id: "1",
-  name: "Modern Lounge Chair",
-  description: "A comfortable and stylish lounge chair perfect for any modern living space. Features premium materials and exceptional craftsmanship.",
-  rating: 4.5,
-  reviews: 128,
-  images: [
-    require("../assets/images/images (2).jpeg"),
-    require("../assets/images/images (2).jpeg"),
-    // Add more images...
-  ],
-  colorVariants: [
-    { color: "Classic Brown", price: 299.99, quantity: 10, colorCode: "#8B4513" },
-    { color: "Charcoal Grey", price: 319.99, quantity: 5, colorCode: "#36454F" },
-    { color: "Cream White", price: 309.99, quantity: 8, colorCode: "#FFFDD0" },
-  ] as ColorVariant[],
-};
+interface ColorVariant {
+  uuid: string;
+  color: Color;
+  price: string;
+  quantity: number;
+  image: string | null;
+}
+
+interface Product {
+  uuid: string;
+  name: string;
+  description: string;
+  image: string | null;
+  product_colors: ColorVariant[];
+  average_rating: number;
+}
 
 const ProductDetails = () => {
   const { productId } = useParams();
-  const [selectedColor, setSelectedColor] = useState<ColorVariant>(productData.colorVariants[0]);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [selectedColor, setSelectedColor] = useState<ColorVariant | null>(null);
   const [quantity, setQuantity] = useState(1);
   const { addToCart } = useCart();
+  const { authFetch } = useAuthenticatedFetch();
+
+  const getData = async () => {
+    try {
+      const res = await authFetch('products/' + productId);
+      const data = await res.json();
+      if (data.status === "success") {
+        setProduct(data.data);
+        setSelectedColor(data.data.product_colors[0]); // Set initial color
+      }
+    } catch (error) {
+      console.error("Error fetching product:", error);
+    }
+  };
+
+  useEffect(() => {
+    getData();
+  }, [productId]);
 
   const handleQuantityChange = (action: 'increase' | 'decrease') => {
-    if (action === 'decrease' && quantity > 1) {
+    if (selectedColor && selectedColor.quantity && action === 'decrease' && quantity > 1) {
       setQuantity(quantity - 1);
-    } else if (action === 'increase' && quantity < selectedColor.quantity) {
+    } else if (selectedColor && action === 'increase' && quantity < selectedColor.quantity) {
       setQuantity(quantity + 1);
     }
   };
 
   const handleAddToCart = () => {
+    if (!product || !selectedColor) return;
+    
     addToCart({
-      id: productData.id,
-      name: productData.name,
-      price: selectedColor.price,
-      image: productData.images[0],
+      id: product.uuid,
+      name: product.name,
+      price: parseFloat(selectedColor.price),
+      image: selectedColor.image || product.image || '',
       quantity: quantity,
-      color: selectedColor.color,
+      color: selectedColor.color.hex_code,
     });
   };
+
+  if (!product || !selectedColor) return <div>Loading...</div>;
 
   return (
     <div className="container mx-auto py-8">
@@ -75,21 +95,38 @@ const ProductDetails = () => {
         >
           <Carousel className="w-full max-w-xl">
             <CarouselContent>
-              {productData.images.map((image, index) => (
-                <CarouselItem key={index}>
+              {/* Show main product image first */}
+              {product.image && (
+                <CarouselItem>
                   <div className="p-1">
                     <Card>
                       <CardContent className="flex aspect-square items-center justify-center p-6">
                         <img
-                          src={image}
-                          alt={`${productData.name} ${index + 1}`}
+                          src={product.image}
+                          alt={product.name}
                           className="w-full h-full object-cover rounded-lg"
                         />
                       </CardContent>
                     </Card>
                   </div>
                 </CarouselItem>
-              ))}
+              )}
+              {/* Show selected color image if available */}
+              {selectedColor.image && (
+                <CarouselItem>
+                  <div className="p-1">
+                    <Card>
+                      <CardContent className="flex aspect-square items-center justify-center p-6">
+                        <img
+                          src={selectedColor.image}
+                          alt={`${product.name} - ${selectedColor.color.hex_code}`}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CarouselItem>
+              )}
             </CarouselContent>
             <CarouselPrevious />
             <CarouselNext />
@@ -103,7 +140,7 @@ const ProductDetails = () => {
           transition={{ duration: 0.5 }}
           className="space-y-6"
         >
-          <h1 className="text-3xl font-bold">{productData.name}</h1>
+          <h1 className="text-3xl font-bold">{product.name}</h1>
           
           {/* Rating */}
           <div className="flex items-center gap-2">
@@ -112,40 +149,36 @@ const ProductDetails = () => {
                 <Star
                   key={index}
                   className={`w-5 h-5 ${
-                    index < Math.floor(productData.rating)
+                    index < Math.floor(product.average_rating)
                       ? "fill-yellow-400 text-yellow-400"
                       : "text-gray-300"
                   }`}
                 />
               ))}
             </div>
-            <span className="text-muted-foreground">
-              ({productData.reviews} reviews)
-            </span>
           </div>
 
           {/* Description */}
-          <p className="text-muted-foreground">{productData.description}</p>
+          <p className="text-muted-foreground">{product.description}</p>
 
           {/* Color Selection */}
           <div className="space-y-4">
             <h3 className="font-semibold">Select Color</h3>
             <div className="flex gap-4">
-              {productData.colorVariants.map((variant) => (
+              {product.product_colors.map((variant) => (
                 <div
-                  key={variant.color}
+                  key={variant.uuid}
                   onClick={() => setSelectedColor(variant)}
                   className={`cursor-pointer space-y-2 ${
-                    selectedColor.color === variant.color
+                    selectedColor.uuid === variant.uuid
                       ? "ring-2 ring-primary ring-offset-2"
                       : ""
                   }`}
                 >
                   <div
                     className="w-8 h-8 rounded-full"
-                    style={{ backgroundColor: variant.colorCode }}
+                    style={{ backgroundColor: variant.color.hex_code }}
                   />
-                  <div className="text-sm">{variant.color}</div>
                 </div>
               ))}
             </div>
@@ -154,7 +187,7 @@ const ProductDetails = () => {
           {/* Price and Quantity */}
           <div className="space-y-4">
             <div className="text-2xl font-bold">
-              ${selectedColor.price.toFixed(2)}
+              ${parseFloat(selectedColor.price).toFixed(2)}
             </div>
             
             <div className="flex items-center gap-4">

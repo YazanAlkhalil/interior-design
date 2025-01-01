@@ -96,7 +96,6 @@ export default function Products() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [isEditingProductOpen, setIsEditingProductOpen] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState<Product>({
@@ -108,7 +107,6 @@ export default function Products() {
   });
 
   const [selectedSection, setSelectedSection] = useState<string>("");
-  const [selectedColor, setSelectedColor] = useState<{ name: string; code: string } | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
   const { authFetch } = useAuthenticatedFetch();
@@ -123,6 +121,9 @@ export default function Products() {
 
   // Add new state for loading
   const [editLoadingId, setEditLoadingId] = useState<string | null>(null);
+
+  // Add new state for delete confirmation
+  const [deletingProduct, setDeletingProduct] = useState<string | null>(null);
 
   const resetForm = () => {
     setFormData({
@@ -178,7 +179,6 @@ export default function Products() {
 
       setIsDialogOpen(false);
       setSelectedSection("");
-      setSelectedColor(null);
       setSelectedImage(null);
       resetForm();
     } catch (error) {
@@ -189,14 +189,22 @@ export default function Products() {
   
 
   const handleDelete = async (productUuid: string) => {
+    setDeletingProduct(productUuid);
+  };
+
+  // Add new confirmation handler
+  const confirmDeleteProduct = async () => {
+    if (!deletingProduct) return;
+
     try {
-      const response = await authFetch(`products/${productUuid}/`, {
+      const response = await authFetch(`products/${deletingProduct}`, {
         method: 'DELETE',
       });
 
       if (!response.ok) throw new Error('Failed to delete product');
       
-      setProducts(products.filter(p => p.uuid !== productUuid));
+      fetchProducts()
+      setDeletingProduct(null);
     } catch (error) {
       console.error('Error deleting product:', error);
     }
@@ -364,6 +372,24 @@ export default function Products() {
                   onChange={handleInputChange}
                   required
                 />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Main Product Image</label>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                />
+                {imagePreview && (
+                  <div className="mt-2">
+                    <img
+                      src={imagePreview}
+                      alt="Product preview"
+                      className="h-32 w-32 object-cover rounded-md"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -565,7 +591,7 @@ export default function Products() {
                     <Button
                       variant="destructive"
                       size="sm"
-                      // onClick={() => handleDeleteProduct(product.uuid)}
+                      onClick={() => handleDelete(product.uuid)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -603,6 +629,26 @@ export default function Products() {
           </PaginationContent>
         </Pagination>
       </div>
+
+      {/* Add the delete confirmation dialog */}
+      <Dialog open={!!deletingProduct} onOpenChange={() => setDeletingProduct(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p>Are you sure you want to delete this product? This action cannot be undone.</p>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setDeletingProduct(null)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={confirmDeleteProduct}>
+                Delete
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

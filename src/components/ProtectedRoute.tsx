@@ -7,7 +7,7 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({
   isAdmin,
-  redirectPath = '/'
+  redirectPath = '/home'
 }: ProtectedRouteProps) => {
 
   if (!isAdmin) {

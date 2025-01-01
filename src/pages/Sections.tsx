@@ -14,6 +14,7 @@ interface SectionCard {
   title: string;
   description: string;
   imageUrl: string;
+  uuid: string;
 }
 
 
@@ -27,7 +28,7 @@ const Sections = () => {
     console.log('useEffect')
     const getSections = async () => {
       console.log('getSections')
-      const res = await authFetch("/sections/");
+      const res = await authFetch("sections/?page=1&page_size=30");
       if(res.ok) {
         const data = await res.json();
         setSections(data.results);
@@ -61,9 +62,7 @@ const Sections = () => {
                 className="overflow-hidden hover:shadow-lg hover:cursor-pointer transition-shadow"
                 onClick={() =>
                   navigate(
-                    `/home/sections/${section.title
-                      .toLowerCase()
-                      .replace(" ", "-")}`
+                    `/home/sections/${encodeURIComponent(section.uuid)}`
                   )
                 }
               >

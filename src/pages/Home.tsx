@@ -47,7 +47,8 @@ const topProducts = [
     name: "Product 1",
     price: 99.99,
     image: require('../assets/images/images (2).jpeg'),
-    rating: 4
+    rating: 4,
+    
   },
   {
     id: "2",
