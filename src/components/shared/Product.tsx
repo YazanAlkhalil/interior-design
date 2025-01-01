@@ -9,15 +9,16 @@ interface ProductProps {
   price: number
   image: string
   rating: number
+  uuid?: string
 }
 
-export const Product = ({ id, name, price, image, rating }: ProductProps) => {
+export const Product = ({ id, name, price, image, rating,uuid }: ProductProps) => {
   const navigate = useNavigate();
 
   return (
     <Card 
       className="w-[300px] hover:shadow-lg transition-shadow cursor-pointer"
-      onClick={() => navigate(`/home/products/${id}`)}
+      onClick={() => navigate(`/home/products/${uuid}`)}
     >
       <CardHeader className="p-0">
       <div className="product-image border-2 border-[#ffbb00]">
