@@ -39,12 +39,13 @@ import {
 interface Section {
   uuid: string;
   title: string;
-  categories: Category[];
 }
 
 interface Category {
   uuid: string;
   title: string;
+  image: string;
+  description: string;
   section: string;
 }
 
@@ -56,7 +57,7 @@ interface ProductColor {
   color: Color;
   price: number;
   quantity: number;
-  image: string | File;
+  image: string | File | undefined;
 }
 
 interface Product {
@@ -91,6 +92,7 @@ export default function Products() {
   const [prevPage, setPrevPage] = useState<string | null>(null);
   const pageSize = 10;
   const [sections, setSections] = useState<Section[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -114,10 +116,13 @@ export default function Products() {
   // New state for color variant form
   const [currentColorVariant, setCurrentColorVariant] = useState({
     hex_code: "",
-    price: 0,
-    quantity: 0,
+    price: "",
+    quantity: "",
     image: null as File | null,
   });
+
+  // Add new state for loading
+  const [editLoadingId, setEditLoadingId] = useState<string | null>(null);
 
   const resetForm = () => {
     setFormData({
@@ -154,14 +159,8 @@ export default function Products() {
         formDataToSend.append('image', selectedImage);
       }
 
-      formData.product_colors.forEach((colorVariant: ProductColor, index: number) => {
-        formDataToSend.append(`product_colors[${index}][color][hex_code]`, colorVariant.color.hex_code);
-        formDataToSend.append(`product_colors[${index}][price]`, colorVariant.price.toString());
-        formDataToSend.append(`product_colors[${index}][quantity]`, colorVariant.quantity.toString());
-        if (colorVariant.image instanceof File) {
-          formDataToSend.append(`product_colors[${index}][image]`, colorVariant.image);
-        }
-      });
+      formDataToSend.append('product_colors', JSON.stringify(formData.product_colors));
+
 
       const url = editingProduct 
         ? `products/${editingProduct.uuid}/`
@@ -174,38 +173,20 @@ export default function Products() {
 
       if (!response.ok) throw new Error('Failed to save product');
 
-      const savedProduct = await response.json();
       
-      if (editingProduct) {
-        setProducts(products.map(p => 
-          p.uuid === editingProduct.uuid ? savedProduct : p
-        ));
-      } else {
-        setProducts([...products, savedProduct]);
-      }
+      fetchProducts();
 
       setIsDialogOpen(false);
+      setSelectedSection("");
+      setSelectedColor(null);
+      setSelectedImage(null);
       resetForm();
     } catch (error) {
       console.error('Error saving product:', error);
     }
   };
 
-  const handleEdit = async (product: Product) => {
-    setEditingProduct(product);
-    setFormData(product);
-    
-    // Find the section for this product's category
-    const sectionWithCategory = sections.find(section =>
-      section.categories.some(cat => cat.uuid === product.category)
-    );
-    
-    if (sectionWithCategory) {
-      setSelectedSection(sectionWithCategory.uuid);
-    }
-    
-    setIsDialogOpen(true);
-  };
+  
 
   const handleDelete = async (productUuid: string) => {
     try {
@@ -238,8 +219,8 @@ export default function Products() {
         ...prev.product_colors,
         {
           color: { hex_code: currentColorVariant.hex_code },
-          price: currentColorVariant.price,
-          quantity: currentColorVariant.quantity,
+          price: Number(currentColorVariant.price) || 0,
+          quantity: Number(currentColorVariant.quantity) || 0,
           image: currentColorVariant.image || "",
         },
       ],
@@ -248,40 +229,40 @@ export default function Products() {
     // Reset color variant form
     setCurrentColorVariant({
       hex_code: "",
-      price: 0,
-      quantity: 0,
+      price: "",
+      quantity: "",
       image: null,
     });
   };
 
   // Update products fetch to handle pagination
+  const fetchProducts = async () => {
+    setIsLoading(true);
+    try {
+      const response = await authFetch(`products/?page=${currentPage}&page_size=${pageSize}`);
+      if (!response.ok) throw new Error('Failed to fetch products');
+      const data: PaginatedProducts = await response.json();
+      
+      setProducts(data.results);
+      setTotalProducts(data.count);
+      setNextPage(data.next);
+      setPrevPage(data.previous);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   useEffect(() => {
-    const fetchProducts = async () => {
-      setIsLoading(true);
-      try {
-        const response = await authFetch(`products/?page=${currentPage}&page_size=${pageSize}`);
-        if (!response.ok) throw new Error('Failed to fetch products');
-        const data: PaginatedProducts = await response.json();
-        
-        setProducts(data.results);
-        setTotalProducts(data.count);
-        setNextPage(data.next);
-        setPrevPage(data.previous);
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
 
     fetchProducts();
   }, [currentPage]);
 
-  // Add sections fetch
+  // Fetch sections on component mount
   useEffect(() => {
     const fetchSections = async () => {
       try {
-        const response = await authFetch('sections/');
+        const response = await authFetch('sections/?page=1&page_size=100');
         if (!response.ok) throw new Error('Failed to fetch sections');
         const data = await response.json();
         setSections(data.results || data);
@@ -293,15 +274,63 @@ export default function Products() {
     fetchSections();
   }, []);
 
+  // Fetch categories when a section is selected
+  const handleSectionChange = async (value: string) => {
+    setSelectedSection(value);
+    setFormData(prev => ({ ...prev, category: "" }));
+    
+    // Find the section title from the selected UUID
+    const selectedSectionTitle = sections.find(s => s.uuid === value)?.title;
+    if (!selectedSectionTitle) return;
+
+    // Fetch categories using section title
+    const res = await authFetch(`category/?section_title=${selectedSectionTitle}`);
+    if (res.ok) {
+      const data = await res.json();
+      setCategories(data.categories || []); 
+    }
+  };
+
   const handleEditProduct = async (uuid: string) => {
+    setEditLoadingId(uuid); // Set loading state for this specific product
     try {
       const response = await authFetch(`products/${uuid}/`);
       if (!response.ok) throw new Error('Failed to fetch product details');
-      const fullProduct = await response.json();
+      let fullProduct = await response.json();
+      fullProduct = fullProduct.data;
+      
+      setSelectedSection(fullProduct.category.section);
+
+      //get categories for this section
+      const selectedSectionTitle = sections.find(s => s.uuid === fullProduct.category.section)?.title;
+      if (!selectedSectionTitle) return;
+      const res = await authFetch(`category/?section_title=${selectedSectionTitle}`);
+      
+      if (res.ok) {
+        const data = await res.json();
+        setCategories(data.categories || []); 
+      }
+      // Set form data with the fetched product details
+      setFormData({
+        uuid: fullProduct.uuid,
+        name: fullProduct.name,
+        description: fullProduct.description,
+        category: fullProduct.category.uuid,
+        image: fullProduct.image,
+        product_colors: fullProduct.product_colors.map((pc: any) => ({
+          color: { hex_code: pc.color.hex_code },
+          price: pc.price,
+          quantity: pc.quantity,
+          image: pc.image
+        }))
+      });
+
       setEditingProduct(fullProduct);
-      setIsEditingProductOpen(true);
+      setIsDialogOpen(true); // Open the main dialog instead of the separate edit dialog
     } catch (error) {
       console.error('Error fetching product details:', error);
+    } finally {
+      setEditLoadingId(null); // Clear loading state
     }
   };
 
@@ -323,7 +352,7 @@ export default function Products() {
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader className="sticky top-0 bg-background z-10 pb-4">
+            <DialogHeader className="top-0 bg-background -z-20 pb-4">
               <DialogTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -352,10 +381,7 @@ export default function Products() {
                 <label className="text-sm font-medium">Section</label>
                 <Select
                   value={selectedSection}
-                  onValueChange={(value) => {
-                    setSelectedSection(value);
-                    setFormData(prev => ({ ...prev, category: "" }));
-                  }}
+                  onValueChange={handleSectionChange}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a section" />
@@ -382,13 +408,11 @@ export default function Products() {
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {sections
-                      .find(s => s.uuid === selectedSection)
-                      ?.categories.map((category) => (
-                        <SelectItem key={category.uuid} value={category.uuid}>
-                          {category.title}
-                        </SelectItem>
-                      ))}
+                    {categories.map((category) => (
+                      <SelectItem key={category.uuid} value={category.uuid}>
+                        {category.title}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -408,28 +432,31 @@ export default function Products() {
                     />
                   </div>
                   <div className="flex-1">
+                    <label className="text-sm font-medium block mb-2">Price ($)</label>
                     <Input
                       type="number"
                       placeholder="Price"
                       value={currentColorVariant.price}
                       onChange={(e) => setCurrentColorVariant(prev => ({
                         ...prev,
-                        price: Number(e.target.value)
+                        price: e.target.value
                       }))}
                     />
                   </div>
                   <div className="flex-1">
+                    <label className="text-sm font-medium block mb-2">Quantity</label>
                     <Input
                       type="number"
                       placeholder="Quantity"
                       value={currentColorVariant.quantity}
                       onChange={(e) => setCurrentColorVariant(prev => ({
                         ...prev,
-                        quantity: Number(e.target.value)
+                        quantity: e.target.value
                       }))}
                     />
                   </div>
                   <div className="flex-1">
+                    <label className="text-sm font-medium block mb-2">Image</label>
                     <Input
                       type="file"
                       accept="image/*"
@@ -443,7 +470,7 @@ export default function Products() {
                       }}
                     />
                   </div>
-                  <Button type="button" onClick={handleAddColorVariant}>
+                  <Button className="text-white" type="button" onClick={handleAddColorVariant}>
                     Add Variant
                   </Button>
                 </div>
@@ -452,7 +479,7 @@ export default function Products() {
               {/* Display Color Variants */}
               <div className="space-y-2">
                 {formData.product_colors.map((variant, index) => (
-                  <div key={index} className="flex items-center gap-4 p-2 border rounded">
+                  <div key={index} className="flex items-center bg-slate-100 gap-4 p-2 border rounded">
                     <div
                       className="w-8 h-8 rounded"
                       style={{ backgroundColor: variant.color.hex_code }}
@@ -516,15 +543,24 @@ export default function Products() {
                 </TableCell>
                 <TableCell>{product.name}</TableCell>
                 <TableCell>{product.category}</TableCell>
-                <TableCell>{product.average_rating.toFixed(1)}</TableCell>
+                <TableCell>
+                  {typeof product.average_rating === 'number' 
+                    ? product.average_rating.toFixed(1) 
+                    : '0.0'}
+                </TableCell>
                 <TableCell>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleEditProduct(product.uuid)}
+                      disabled={editLoadingId === product.uuid}
                     >
-                      <Pencil className="h-4 w-4" />
+                      {editLoadingId === product.uuid ? (
+                        <span className="animate-spin">⏳</span>
+                      ) : (
+                        <Pencil className="h-4 w-4" />
+                      )}
                     </Button>
                     <Button
                       variant="destructive"
@@ -567,15 +603,6 @@ export default function Products() {
           </PaginationContent>
         </Pagination>
       </div>
-
-      <Dialog open={isEditingProductOpen} onOpenChange={setIsEditingProductOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Product</DialogTitle>
-          </DialogHeader>
-          {/* Your edit product form content */}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
