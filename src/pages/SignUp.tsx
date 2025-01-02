@@ -15,14 +15,21 @@ export default function SignUp() {
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const handleNextStep = (e: React.FormEvent) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
     setStep(2);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+
     if (email && password && firstName && lastName && phone && address) {
       try {
         const res = await fetch('http://45.9.191.191/api/v1/register/', {
@@ -41,9 +48,11 @@ export default function SignUp() {
             address
           })
         });
+        
         if (!res.ok) {
           const errorData = await res.json();
           toast.error(errorData.en || 'Registration failed. Please try again.');
+          setIsLoading(false);
           throw new Error(`HTTP error! status: ${res.status}`);
         }
         
@@ -53,7 +62,7 @@ export default function SignUp() {
         
       } catch (error) {
         toast.error('Registration failed. Please try again.');
-        
+        setIsLoading(false);
       }
     }
   };
@@ -99,8 +108,19 @@ export default function SignUp() {
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-4">
-              <Button type="submit" className="w-full text-white bg-[#95714f] hover:bg-[#7c5e42]">
-                Next Step
+              <Button 
+                type="submit" 
+                className="w-full text-white bg-[#95714f] hover:bg-[#7c5e42]"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <span className="animate-spin mr-2">⭗</span>
+                    Creating Account...
+                  </>
+                ) : (
+                  'Next Step'
+                )}
               </Button>
               <div className="w-full text-center">
                 Already have an account?{' '}
@@ -155,14 +175,26 @@ export default function SignUp() {
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-4">
-              <Button type="submit" className="w-full text-white bg-[#95714f] hover:bg-[#7c5e42]">
-                Create Account
+              <Button 
+                type="submit" 
+                className="w-full text-white bg-[#95714f] hover:bg-[#7c5e42]"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <span className="animate-spin mr-2">⭗</span>
+                    Creating Account...
+                  </>
+                ) : (
+                  'Create Account'
+                )}
               </Button>
               <Button 
                 type="button" 
                 onClick={() => setStep(1)} 
                 variant="outline" 
                 className="w-full"
+                disabled={isLoading}
               >
                 Back
               </Button>
