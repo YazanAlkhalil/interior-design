@@ -22,7 +22,7 @@ const MainLayout: FC= () => {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center">
           {/* Logo */}
-          <Link to="/" className="mr-6 flex items-center space-x-2">
+          <Link to="/home" className="mr-6 flex items-center space-x-2">
             <img src={require("../../assets/images/logo.png")} alt="logo" className="w-28" />
           </Link>
 
