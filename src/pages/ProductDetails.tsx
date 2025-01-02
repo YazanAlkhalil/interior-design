@@ -8,11 +8,12 @@ import {
 } from "../components/ui/Carousel";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { Star, Minus, Plus, ShoppingCart } from "lucide-react";
+import { Star, StarHalf, Minus, Plus, ShoppingCart } from "lucide-react";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useCart } from "../context/CartContext";
 import { useAuthenticatedFetch } from "../hooks/useAuthenticatedFetch";
+import { toast } from "react-hot-toast";
 
 interface Color {
   uuid: string;
@@ -43,6 +44,8 @@ const ProductDetails = () => {
   const [quantity, setQuantity] = useState(1);
   const { addToCart } = useCart();
   const { authFetch } = useAuthenticatedFetch();
+  const [userRating, setUserRating] = useState<number | null>(null);
+  const [isHovering, setIsHovering] = useState<number | null>(null);
 
   const getData = async () => {
     try {
@@ -81,6 +84,65 @@ const ProductDetails = () => {
       color: selectedColor.color.hex_code,
     });
   };
+
+  const handleRating = async (score: number) => {
+    try {
+      const response = await authFetch('rate/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          score,
+          product: productId
+        })
+      });
+      
+      const data = await response.json();
+      if (data.id) {
+        setUserRating(score);
+        toast.success("Thank you for rating this product!");
+        // Optionally refresh the product to get the new average rating
+        getData();
+      }
+    } catch (error) {
+      toast.error("Failed to submit rating. Please try again.");
+    }
+  };
+
+  const RatingDisplay = () => (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <div className="flex">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <div
+              key={star}
+              className="cursor-pointer relative"
+              onMouseEnter={() => setIsHovering(star)}
+              onMouseLeave={() => setIsHovering(null)}
+              onClick={() => handleRating(star)}
+            >
+              <Star
+                className={`w-6 h-6 transition-colors ${
+                  (isHovering !== null
+                    ? star <= isHovering
+                    : star <= (userRating || product?.average_rating || 0))
+                    ? "fill-yellow-400 text-yellow-400"
+                    : "text-gray-300"
+                }`}
+              />
+            </div>
+          ))}
+        </div>
+        <span className="text-sm text-muted-foreground">
+          {userRating ? "Your rating" : "Click to rate"}
+        </span>
+      </div>
+      <p className="text-sm text-muted-foreground">
+        Average rating: {product?.average_rating.toFixed(1) || 0} / 5
+      </p>
+    </div>
+  );
 
   if (!product || !selectedColor) return <div>Loading...</div>;
 
@@ -142,21 +204,8 @@ const ProductDetails = () => {
         >
           <h1 className="text-3xl font-bold">{product.name}</h1>
           
-          {/* Rating */}
-          <div className="flex items-center gap-2">
-            <div className="flex">
-              {[...Array(5)].map((_, index) => (
-                <Star
-                  key={index}
-                  className={`w-5 h-5 ${
-                    index < Math.floor(product.average_rating)
-                      ? "fill-yellow-400 text-yellow-400"
-                      : "text-gray-300"
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
+          {/* Updated Rating Component */}
+          <RatingDisplay />
 
           {/* Description */}
           <p className="text-muted-foreground">{product.description}</p>
@@ -176,7 +225,7 @@ const ProductDetails = () => {
                   }`}
                 >
                   <div
-                    className="w-8 h-8 rounded-full"
+                    className="w-8 h-8 rounded-full border border-gray-200"
                     style={{ backgroundColor: variant.color.hex_code }}
                   />
                 </div>

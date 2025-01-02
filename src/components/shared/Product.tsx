@@ -8,11 +8,11 @@ interface ProductProps {
   name: string
   price: number
   image: string
-  rating: number
+  average_rating: number
   uuid?: string
 }
 
-export const Product = ({ id, name, price, image, rating,uuid }: ProductProps) => {
+export const Product = ({ id, name, price, image, average_rating,uuid }: ProductProps) => {
   const navigate = useNavigate();
 
   return (
@@ -33,7 +33,7 @@ export const Product = ({ id, name, price, image, rating,uuid }: ProductProps) =
             <Star
               key={index}
               className={`w-4 h-4 ${
-                index < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                index < average_rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
               }`}
             />
           ))}

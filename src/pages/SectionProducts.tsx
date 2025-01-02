@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { TopProducts } from "../components/shared/TopProduct";
 import { useAuthenticatedFetch } from "../hooks/useAuthenticatedFetch";
+import { Skeleton } from "../components/ui/skeleton";
 
 const SectionProducts = () => {
   const { sectionId } = useParams();
@@ -14,6 +15,7 @@ const SectionProducts = () => {
   const [products, setProducts] = useState<Array<any>>([]);
   const [sectionTitle, setSectionTitle] = useState("");
   const { authFetch } = useAuthenticatedFetch();
+  const [isLoading, setIsLoading] = useState(true);
   
   const filteredProducts = products;
   const formatSectionTitle = (title: string) => {
@@ -47,9 +49,14 @@ const SectionProducts = () => {
     ]);
   }
   
-  const getData = async ()=> {
-   await getCategories();
-    getProducts();
+  const getData = async () => {
+    setIsLoading(true);
+    try {
+      await getCategories();
+      await getProducts();
+    } finally {
+      setIsLoading(false);
+    }
   }
   useEffect(() => {
     getData()
@@ -59,24 +66,33 @@ const SectionProducts = () => {
     <div className="container mx-auto py-8">
       <div className="space-y-8">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">
-            {formatSectionTitle(sectionTitle ?? '')} Products
-          </h1>
-          <Select
-            value={selectedCategory}
-            onValueChange={setSelectedCategory}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((category) => (
-                <SelectItem key={category.uuid} value={category.uuid}>
-                  {category.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {isLoading ? (
+            <Skeleton className="h-10 w-64" />
+          ) : (
+            <h1 className="text-3xl font-bold">
+              {formatSectionTitle(sectionTitle ?? '')} Products
+            </h1>
+          )}
+          
+          {isLoading ? (
+            <Skeleton className="h-10 w-[180px]" />
+          ) : (
+            <Select
+              value={selectedCategory}
+              onValueChange={setSelectedCategory}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category.uuid} value={category.uuid}>
+                    {category.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         <motion.div 
@@ -85,16 +101,41 @@ const SectionProducts = () => {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
-          {filteredProducts.map((product, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Product {...product} />
-            </motion.div>
-          ))}
+          {isLoading ? (
+            // Loading skeleton grid
+            [...Array(8)].map((_, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Card>
+                  <CardHeader>
+                    <Skeleton className="h-48 w-full rounded-none" />
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <Skeleton className="h-4 w-3/4 rounded-none" />
+                    <Skeleton className="h-4 w-1/2 rounded-none" />
+                  </CardContent>
+                  <CardFooter>
+                    <Skeleton className="h-8 w-24 rounded-none" />
+                  </CardFooter>
+                </Card>
+              </motion.div>
+            ))
+          ) : (
+            filteredProducts.map((product, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Product {...product} />
+              </motion.div>
+            ))
+          )}
         </motion.div>
       </div>
     </div>

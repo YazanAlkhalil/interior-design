@@ -47,7 +47,7 @@ const topProducts = [
     name: "Product 1",
     price: 99.99,
     image: require('../assets/images/images (2).jpeg'),
-    rating: 4,
+    average_rating: 4,
     
   },
   {
@@ -55,42 +55,42 @@ const topProducts = [
     name: "Product 2",
     price: 149.99,
     image: require('../assets/images/images (2).jpeg'),
-    rating: 5
+    average_rating: 5
   },
   {
     id: "3",
     name: "Product 3",
     price: 79.99,
     image: require('../assets/images/images (2).jpeg'),
-    rating: 4
+    average_rating: 4
   },
   {
     id: "4",
     name: "Product 4",
     price: 199.99,
     image: require('../assets/images/images (2).jpeg'),
-    rating: 5
+    average_rating: 5
   },
   {
     id: "5",
     name: "Product 4",
     price: 199.99,
     image: require('../assets/images/images (2).jpeg'),
-    rating: 5
+    average_rating: 5
   },
   {
     id: "6",
     name: "Product 4",
     price: 199.99,
     image: require('../assets/images/images (2).jpeg'),
-    rating: 5
+    average_rating: 5
   },
   {
     id: "7",
     name: "Product 4",
     price: 199.99,
     image: require('../assets/images/images (2).jpeg'),
-    rating: 5
+    average_rating: 5
   },
 ]
 
