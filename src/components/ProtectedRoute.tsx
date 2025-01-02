@@ -1,7 +1,7 @@
 import { Navigate, Outlet } from 'react-router-dom';
 
 interface ProtectedRouteProps {
-  isAdmin: boolean;
+  isAdmin: () => boolean;
   redirectPath?: string;
 }
 
@@ -10,7 +10,7 @@ const ProtectedRoute = ({
   redirectPath = '/home'
 }: ProtectedRouteProps) => {
 
-  if (!isAdmin) {
+  if (!isAdmin()) {
     return <Navigate to={redirectPath} replace />;
   }
 

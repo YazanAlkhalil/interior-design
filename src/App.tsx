@@ -30,10 +30,9 @@ import ResetPassword from './pages/ResetPassword';
 import ProtectedRoute from './components/ProtectedRoute';
 import Departments from './pages/admin/Departments';
 import Employees from './pages/admin/Employees';
+import PaymentSuccess from './pages/PaymentSuccess';
 
 function App() {
-  const isAdmin = localStorage.getItem('role') === "ADMIN";
-
   return (
     <>
     <div><Toaster/></div>
@@ -46,6 +45,7 @@ function App() {
           <Route path="/email" element={<EmailForPasswordReset />} />
           <Route path="/verify-otp" element={<ResetPasswordOTP />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/payment/success" element={<PaymentSuccess/>} />
           <Route path="/home" element={<MainLayout />} >
             <Route index element={<Home />} />
             <Route path="sections" element={<Sections />} />
@@ -61,7 +61,7 @@ function App() {
           </Route>
 
           {/* admin pages */}
-          <Route element={<ProtectedRoute isAdmin={isAdmin} />}>
+          <Route element={<ProtectedRoute isAdmin={() => localStorage.getItem('role') === "ADMIN"} />}>
             <Route path="/admin" element={<AdminLayout />}>
               <Route path="products" element={<Products />} />
               <Route path="clients" element={<ClientsPage />} />

@@ -10,11 +10,13 @@ import { useAuthenticatedFetch } from '../hooks/useAuthenticatedFetch';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate()
   const { authFetch } = useAuthenticatedFetch();
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
     try {
       const res = await authFetch('login/', {
@@ -24,13 +26,16 @@ export default function Login() {
       
       if (!res.ok) {
         const errorData = await res.json();
-        return toast.error(errorData.en || 'Registration failed. Please try again.');
+        toast.error(errorData.en || 'Registration failed. Please try again.');
+        setIsLoading(false);
+        return;
       }
       
       const data = await res.json();
       localStorage.setItem('access', data.access);
       localStorage.setItem('refresh', data.refresh);
       localStorage.setItem('role', data.role);
+      console.log(data.role)
       
       if(data.role === 'ADMIN') {
         console.log('developer');
@@ -42,6 +47,7 @@ export default function Login() {
 
     } catch (error) {
       toast.error('Login failed. Please try again.');
+      setIsLoading(false);
     }
   };
 
@@ -88,15 +94,23 @@ export default function Login() {
             <Button 
               type="submit" 
               className="w-full text-white bg-primary hover:bg-[#7c5e42]"
+              disabled={isLoading}
             >
-              Sign In
+              {isLoading ? (
+                <>
+                  <span className="animate-spin mr-2">⭗</span>
+                  Signing in...
+                </>
+              ) : (
+                'Sign In'
+              )}
             </Button>
             <Button 
               type="button"
-              
               variant="outline"
               className="w-full border-primary text-primary hover:bg-primary/10"
               onClick={handleGuestAccess}
+              disabled={isLoading}
             >
               Continue as Guest
             </Button>

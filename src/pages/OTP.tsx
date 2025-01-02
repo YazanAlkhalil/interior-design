@@ -123,6 +123,7 @@ export default function OTPVerification() {
               <Button
                 variant="outline"
                 onClick={() => setOtp("")}
+                type="button"
               >
                 Clear
               </Button>

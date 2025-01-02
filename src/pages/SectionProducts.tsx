@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { TopProducts } from "../components/shared/TopProduct";
 import { useAuthenticatedFetch } from "../hooks/useAuthenticatedFetch";
+import { useInView } from 'react-intersection-observer';
 import { Skeleton } from "../components/ui/skeleton";
 
 const SectionProducts = () => {
@@ -15,6 +16,9 @@ const SectionProducts = () => {
   const [products, setProducts] = useState<Array<any>>([]);
   const [sectionTitle, setSectionTitle] = useState("");
   const { authFetch } = useAuthenticatedFetch();
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const { ref, inView } = useInView();
   const [isLoading, setIsLoading] = useState(true);
   
   const filteredProducts = products;
@@ -24,13 +28,20 @@ const SectionProducts = () => {
 
 
 
-  const getProducts = async () => {
+  const getProducts = async (pageNumber: number) => {
     const categoryQuery = selectedCategory === "all" 
       ? "" 
       : `category=${selectedCategory}`;
-    const res = await authFetch(`products/?section=${sectionId}&${categoryQuery}`);
+    const res = await authFetch(`products/?${categoryQuery}&page=${pageNumber}`);
     const data = await res.json();
-    setProducts(data.results || []);
+    
+    if (pageNumber === 1) {
+      setProducts(data.results || []);
+    } else {
+      setProducts(prev => [...prev, ...(data.results || [])]);
+    }
+    
+    setHasMore(!!data.next);
   }
 
   
@@ -49,17 +60,27 @@ const SectionProducts = () => {
     ]);
   }
   
-  const getData = async () => {
+  const getData = async ()  => {
     setIsLoading(true);
     try {
-      await getCategories();
-      await getProducts();
+       setPage(1);
+    await getCategories();
+      await getProducts(1);
     } finally {
       setIsLoading(false);
     }
   }
+
   useEffect(() => {
-    getData()
+    if (inView && hasMore) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      getProducts(nextPage);
+    }
+  }, [inView]);
+
+  useEffect(() => {
+    getData();
   }, [selectedCategory]);
 
   return (
@@ -137,6 +158,12 @@ const SectionProducts = () => {
             ))
           )}
         </motion.div>
+        
+        {hasMore && (
+          <div ref={ref} className="flex justify-center p-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          </div>
+        )}
       </div>
     </div>
   );
