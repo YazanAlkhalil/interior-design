@@ -35,6 +35,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "../../components/ui/pagination";
+import { toast } from "react-hot-toast";
 
 interface Section {
   uuid: string;
@@ -113,7 +114,7 @@ export default function Products() {
 
   // New state for color variant form
   const [currentColorVariant, setCurrentColorVariant] = useState({
-    hex_code: "",
+    hex_code: "#000000",
     price: "",
     quantity: "",
     image: null as File | null,
@@ -133,6 +134,8 @@ export default function Products() {
       category: "",
       product_colors: [],
     });
+    setSelectedImage(null);
+    setImagePreview("");
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -146,8 +149,15 @@ export default function Products() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Add validation for required fields including color variants
     if (!formData.name || !formData.description || !formData.category) {
-      alert("Please fill in all required fields");
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    // Add validation for at least one color variant
+    if (formData.product_colors.length === 0) {
+      toast.error("Please add at least one color variant");
       return;
     }
 
@@ -160,7 +170,14 @@ export default function Products() {
         formDataToSend.append('image', selectedImage);
       }
 
-      formDataToSend.append('product_colors', JSON.stringify(formData.product_colors));
+      formData.product_colors.forEach((colorVariant, index) => {
+        formDataToSend.append(`hex_codes[${index}]`, colorVariant.color.hex_code);
+        formDataToSend.append(`prices[${index}]`, colorVariant.price.toString());
+        formDataToSend.append(`quantities[${index}]`, colorVariant.quantity.toString());
+        if (colorVariant.image) {
+          formDataToSend.append(`images[${index}]`, colorVariant.image);
+        }
+      });
 
 
       const url = editingProduct 
@@ -183,6 +200,7 @@ export default function Products() {
       resetForm();
     } catch (error) {
       console.error('Error saving product:', error);
+      toast.error("Failed to save product");
     }
   };
 
@@ -197,7 +215,7 @@ export default function Products() {
     if (!deletingProduct) return;
 
     try {
-      const response = await authFetch(`products/${deletingProduct}`, {
+      const response = await authFetch(`products/${deletingProduct}/`, {
         method: 'DELETE',
       });
 
@@ -219,7 +237,10 @@ export default function Products() {
   };
 
   const handleAddColorVariant = () => {
-    if (!currentColorVariant.hex_code) return;
+    if (!currentColorVariant.hex_code || !currentColorVariant.price || !currentColorVariant.quantity) {
+      toast.error("Please fill in all variant fields (color, price, and quantity)");
+      return;
+    }
 
     setFormData(prev => ({
       ...prev,
@@ -236,7 +257,7 @@ export default function Products() {
 
     // Reset color variant form
     setCurrentColorVariant({
-      hex_code: "",
+      hex_code: "#000000",
       price: "",
       quantity: "",
       image: null,
@@ -324,12 +345,12 @@ export default function Products() {
         name: fullProduct.name,
         description: fullProduct.description,
         category: fullProduct.category.uuid,
-        image: fullProduct.image,
+        image: fullProduct.image ?? null,
         product_colors: fullProduct.product_colors.map((pc: any) => ({
           color: { hex_code: pc.color.hex_code },
           price: pc.price,
           quantity: pc.quantity,
-          image: pc.image
+          image: pc.image 
         }))
       });
 
@@ -351,6 +372,8 @@ export default function Products() {
           if (!open) {
             resetForm();
             setEditingProduct(null);
+            setSelectedImage(null);
+            setImagePreview("");
           }
         }}>
           <DialogTrigger asChild>

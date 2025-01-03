@@ -35,6 +35,7 @@ export default function Login() {
       localStorage.setItem('access', data.access);
       localStorage.setItem('refresh', data.refresh);
       localStorage.setItem('role', data.role);
+      console.log(data.role)
       
       if(data.role === 'ADMIN') {
         console.log('developer');

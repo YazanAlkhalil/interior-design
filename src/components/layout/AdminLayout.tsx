@@ -18,7 +18,7 @@ const navItems = {
     { name: "Employees", href: "/admin/employees" },
     { name: "Products", href: "/admin/products" },
     { name: "Sections", href: "/admin/sections" },
-    { name: "Plans", href: "/admin/plans" },
+    // { name: "Plans", href: "/admin/plans" },
     { name: "Orders", href: "/admin/orders" },
     { name: "Departments", href: "/admin/departments" },
   ]
@@ -77,11 +77,11 @@ export default function AdminLayout() {
         {/* Top Bar */}
         <header className="h-16 border-b flex items-center justify-between px-6">
           <div className="relative w-96">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            {/* <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search..."
               className="pl-8"
-            />
+            /> */}
           </div>
           <Button variant="ghost" size="icon">
             <Bell className="h-5 w-5" />

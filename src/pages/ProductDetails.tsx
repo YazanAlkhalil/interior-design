@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useCart } from "../context/CartContext";
 import { useAuthenticatedFetch } from "../hooks/useAuthenticatedFetch";
+import { toast } from "react-hot-toast";
 
 interface Color {
   uuid: string;
@@ -69,17 +70,41 @@ const ProductDetails = () => {
     }
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product || !selectedColor) return;
     
-    addToCart({
-      id: product.uuid,
-      name: product.name,
-      price: parseFloat(selectedColor.price),
-      image: selectedColor.image || product.image || '',
-      quantity: quantity,
-      color: selectedColor.color.hex_code,
+    const role = localStorage.getItem('role')
+    if(role === 'GUEST'){
+      toast.error('Please login to add items to cart')
+      return
+    }
+
+
+    const res = await authFetch('cart/items/', {
+      method: 'POST',
+      body: JSON.stringify({
+        items: [
+          {
+            product_color_uuid: selectedColor.uuid,
+            quantity,
+          }
+        ]
+      }),
     });
+
+    if (res.status === 200) {
+      addToCart({
+        id: product.uuid,
+        name: product.name,
+        price: parseFloat(selectedColor.price),
+        image: selectedColor.image || product.image || '',
+        quantity: quantity,
+        color: selectedColor.color.hex_code,
+      });
+      toast.success('Item added to cart');
+    } else {
+      toast.error('Failed to add item to cart');
+    }
   };
 
   if (!product || !selectedColor) return <div>Loading...</div>;
@@ -94,8 +119,24 @@ const ProductDetails = () => {
           transition={{ duration: 0.5 }}
         >
           <Carousel className="w-full max-w-xl">
-            <CarouselContent>
-              {/* Show main product image first */}
+            <CarouselContent key={selectedColor?.uuid || 'default'}>
+              {/* Show selected color image first if available */}
+              {selectedColor?.image && (
+                <CarouselItem>
+                  <div className="p-1">
+                    <Card>
+                      <CardContent className="flex aspect-square items-center justify-center p-6">
+                        <img
+                          src={selectedColor.image}
+                          alt={`${product.name} - ${selectedColor.color.hex_code}`}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CarouselItem>
+              )}
+              {/* Show main product image */}
               {product.image && (
                 <CarouselItem>
                   <div className="p-1">
@@ -104,22 +145,6 @@ const ProductDetails = () => {
                         <img
                           src={product.image}
                           alt={product.name}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                      </CardContent>
-                    </Card>
-                  </div>
-                </CarouselItem>
-              )}
-              {/* Show selected color image if available */}
-              {selectedColor.image && (
-                <CarouselItem>
-                  <div className="p-1">
-                    <Card>
-                      <CardContent className="flex aspect-square items-center justify-center p-6">
-                        <img
-                          src={selectedColor.image}
-                          alt={`${product.name} - ${selectedColor.color.hex_code}`}
                           className="w-full h-full object-cover rounded-lg"
                         />
                       </CardContent>

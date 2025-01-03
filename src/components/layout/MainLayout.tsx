@@ -9,6 +9,7 @@ import {
   Package,
   Settings,
   Search,
+  LogOut,
 } from "lucide-react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
@@ -74,17 +75,18 @@ const MainLayout: FC= () => {
               <Button variant="ghost" size="icon" className="relative">
                 <ShoppingCart className="h-5 w-5" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground w-5 h-5 rounded-full text-xs flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground w-5 h-5 rounded-full text-xs flex items-center justify-center text-white">
                     {cartCount}
                   </span>
                 )}
               </Button>
             </Link>
-            <Link to="/profile">
-              <Button variant="ghost" size="icon">
-                <User className="h-5 w-5" />
-              </Button>
-            </Link>
+            <Button variant="ghost" size="icon" onClick={() => {
+              localStorage.clear();
+              window.location.href = '/';
+            }}>
+              <LogOut className="h-5 w-5" />
+            </Button>
           </div>
         </div>
       </header>
