@@ -21,6 +21,9 @@ const navItems = {
     // { name: "Plans", href: "/admin/plans" },
     { name: "Orders", href: "/admin/orders" },
     { name: "Departments", href: "/admin/departments" },
+  ],
+  Configuration: [
+    { name: "Settings", href: "/admin/settings" }
   ]
 }
 

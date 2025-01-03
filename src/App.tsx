@@ -31,6 +31,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Departments from './pages/admin/Departments';
 import Employees from './pages/admin/Employees';
 import PaymentSuccess from './pages/PaymentSuccess';
+import Settings from './pages/admin/Settings';
 
 function App() {
   return (
@@ -71,7 +72,7 @@ function App() {
               <Route path="orders" element={<OrdersManagement />} />
               <Route path="departments" element={<Departments />} />
               <Route path="employees" element={<Employees/>} />
-              
+              <Route path="settings" element={<Settings />} />
             </Route>
           </Route>
         </Routes>

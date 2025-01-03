@@ -27,36 +27,49 @@ import {
 import { format } from "date-fns";
 import { cn } from "../../lib/utils";
 import { CalendarIcon } from "lucide-react";
+import { useAuthenticatedFetch } from "../../hooks/useAuthenticatedFetch";
+import { toast } from "react-hot-toast";
 
 // Mock data - Move to a separate file in production
-const sections = ["Living Room", "Bedroom", "Kitchen", "Bathroom", "Office"];
-const methods = ["Online", "In-Person"];
-const PRICE_PER_HOUR = 50;
+
 
 interface Employee {
-  id: string;
-  name: string;
+
+  uuid: string;
+
+  user: {
+    first_name: string;
+    last_name: string;
+
+  }
   specialization: string;
+}
+
+interface ConsultationMethod {
+  uuid: string;
+  name: string;
+  is_available: boolean;
 }
 
 interface TimeSlot {
   time: string;
-  available: boolean;
+  end_time: string;
 }
 
 // Mock employees data
-const employees: Employee[] = [
-  { id: "1", name: "John Smith", specialization: "Interior Designer" },
-  { id: "2", name: "Sarah Johnson", specialization: "Color Specialist" },
-  { id: "3", name: "Mike Brown", specialization: "Space Planning" },
-];
+// const employees: Employee[] = [
+//   { id: "1", name: "John Smith", specialization: "Interior Designer" },
+//   { id: "2", name: "Sarah Johnson", specialization: "Color Specialist" },
+//   { id: "3", name: "Mike Brown", specialization: "Space Planning" },
+// ];
 
 const ConsultationServiceForm = () => {
+  const { authFetch } = useAuthenticatedFetch();
   const [formData, setFormData] = useState({
     section: "",
     employeeId: "",
     date: null as Date | null,
-    hours: "",
+    minutes: "",
     timeSlot: "",
     method: "",
     phoneNumber: "",
@@ -66,6 +79,9 @@ const ConsultationServiceForm = () => {
   const [availableHours, setAvailableHours] = useState<string[]>([]);
   const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([]);
   const [totalPrice, setTotalPrice] = useState(0);
+  const [methods, setMethods] = useState<ConsultationMethod[]>([]);
+  const [employees,setEmployees] = useState([])
+  const [consulting_hourly_rate,setConsultingHourlyRate] = useState('')
 
   // Fetch available hours based on employee and date selection
   useEffect(() => {
@@ -76,27 +92,74 @@ const ConsultationServiceForm = () => {
     }
   }, [formData.employeeId, formData.date]);
 
-  // Fetch available time slots based on employee, date, and hours
+  // Add new useEffects for fetching methods and consultants
   useEffect(() => {
-    if (formData.employeeId && formData.date && formData.hours) {
-      // Mock API call - replace with actual API call
-      const mockTimeSlots: TimeSlot[] = [
-        { time: "09:00", available: true },
-        { time: "10:00", available: true },
-        { time: "11:00", available: false },
-        { time: "14:00", available: true },
-        { time: "15:00", available: true },
-      ];
-      setAvailableTimeSlots(mockTimeSlots);
+    fetchMethods();
+    fetchConsultants();
+    fetchHours()
+  }, []);
+
+  const fetchHours = async () => {
+    try {
+      const response = await authFetch("service-settings/");
+      const data = await response.json();
+      setConsultingHourlyRate(data.consulting_hourly_rate);
+    } catch (error) {
+      toast.error("Failed to fetch Hourly rate");
     }
-  }, [formData.employeeId, formData.date, formData.hours]);
+  };
+
+  const fetchMethods = async () => {
+    try {
+      const response = await authFetch("service-methods/available/");
+      const data = await response.json();
+      setMethods(data.data.filter((method: ConsultationMethod) => method.is_available));
+    } catch (error) {
+      toast.error("Failed to fetch consultation methods");
+    }
+  };
+
+  const fetchConsultants = async () => {
+    try {
+      const response = await authFetch("employees/?is_consultable=true");
+      const data = await response.json();
+      setEmployees(data.data);
+    } catch (error) {
+      toast.error("Failed to fetch consultants");
+    }
+  };
+
+  // Update the time slots fetching logic
+  useEffect(() => {
+    const fetchTimeSlots = async () => {
+      if (formData.employeeId && formData.date && formData.minutes) {
+        try {
+          const response = await authFetch(`consulting-services/available_slots/?consultant_uuid=${formData.employeeId}&date=${format(formData.date, "yyyy-MM-dd")}&duration=${formData.minutes}`, {
+      
+            
+          });
+          
+          const data = await response.json();
+          if (response.ok) {
+            setAvailableTimeSlots(data.slots);
+          } else {
+            toast.error("Failed to fetch available time slots");
+          }
+        } catch (error) {
+          toast.error("Failed to fetch available time slots");
+        }
+      }
+    };
+
+    fetchTimeSlots();
+  }, [formData.employeeId, formData.date, formData.minutes]);
 
   // Calculate total price
   useEffect(() => {
-    if (formData.hours) {
-      setTotalPrice(parseInt(formData.hours) * PRICE_PER_HOUR);
+    if (formData.minutes) {
+      setTotalPrice(parseInt(formData.minutes) * Number(consulting_hourly_rate) / 60);
     }
-  }, [formData.hours]);
+  }, [formData.minutes]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,27 +183,7 @@ const ConsultationServiceForm = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Section Selection */}
-              <div className="space-y-2">
-                <Label htmlFor="section">Select Section</Label>
-                <Select
-                  value={formData.section}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({ ...prev, section: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a section" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sections.map((section) => (
-                      <SelectItem key={section} value={section.toLowerCase()}>
-                        {section}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              
 
               {/* Employee Selection */}
               <div className="space-y-2">
@@ -155,9 +198,9 @@ const ConsultationServiceForm = () => {
                     <SelectValue placeholder="Select a consultant" />
                   </SelectTrigger>
                   <SelectContent>
-                    {employees.map((employee) => (
-                      <SelectItem key={employee.id} value={employee.id}>
-                        {employee.name} - {employee.specialization}
+                    {employees.map((employee:Employee) => (
+                      <SelectItem key={employee.uuid} value={employee.uuid}>
+                        {employee.user.first_name} - {employee.user.last_name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -196,13 +239,13 @@ const ConsultationServiceForm = () => {
                 </Popover>
               </div>
 
-              {/* Hours Selection */}
+              {/* Minutes Selection */}
               <div className="space-y-2">
                 <Label htmlFor="hours">Number of Hours</Label>
                 <Select
-                  value={formData.hours}
+                  value={formData.minutes}
                   onValueChange={(value) =>
-                    setFormData((prev) => ({ ...prev, hours: value }))
+                    setFormData((prev) => ({ ...prev, minutes: value }))
                   }
                   disabled={!formData.date || !formData.employeeId}
                 >
@@ -227,7 +270,7 @@ const ConsultationServiceForm = () => {
                   onValueChange={(value) =>
                     setFormData((prev) => ({ ...prev, timeSlot: value }))
                   }
-                  disabled={!formData.hours}
+                  disabled={!formData.minutes}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select time slot" />
@@ -258,8 +301,8 @@ const ConsultationServiceForm = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {methods.map((method) => (
-                      <SelectItem key={method} value={method.toLowerCase()}>
-                        {method}
+                      <SelectItem key={method.uuid} value={method.uuid}>
+                        {method.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -308,7 +351,7 @@ const ConsultationServiceForm = () => {
                     !formData.section ||
                     !formData.employeeId ||
                     !formData.date ||
-                    !formData.hours ||
+                    !formData.minutes ||
                     !formData.timeSlot ||
                     !formData.method ||
                     !formData.phoneNumber
