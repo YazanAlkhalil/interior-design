@@ -10,6 +10,8 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
+import Lottie from "lottie-react";
+import animationData from "../assets/SK.json";
 
 interface SectionCard {
   title: string;
@@ -26,19 +28,35 @@ const Sections = () => {
   const { t } = useLanguage();
 
   const [sections, setSections] = useState<SectionCard[]>([]);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    console.log('useEffect')
     const getSections = async () => {
-      console.log('getSections')
-      const res = await authFetch("sections/?page=1&page_size=30");
-      if(res.ok) {
-        const data = await res.json();
-        setSections(data.results);
-        console.log(data);
+      try {
+        const res = await authFetch("sections/?page=1&page_size=30");
+        if(res.ok) {
+          const data = await res.json();
+          setSections(data.results);
+        }
+      } finally {
+        setLoading(false);
       }
     };
     getSections();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-background">
+        <Lottie
+          animationData={animationData}
+          className="w-96"
+          loop={true}
+          autoplay={true}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-12">

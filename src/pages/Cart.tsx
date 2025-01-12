@@ -22,6 +22,9 @@ import {
 import { Input } from "../components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
+import Lottie from "lottie-react";
+import animationData from "../assets/SK.json";
+
 interface CartItem {
   uuid: string;
   product_uuid: string;
@@ -172,7 +175,8 @@ const Cart = () => {
   });
 
   const { authFetch } = useAuthenticatedFetch();
-  
+  const [loading, setLoading] = useState(true);
+
   async function getCartItems() {
     try {
       const res = await authFetch('cart/');
@@ -182,6 +186,8 @@ const Cart = () => {
       }
     } catch (error) {
       console.error('Error fetching cart:', error);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -189,6 +195,18 @@ const Cart = () => {
     getCartItems();
   }, []);
 
+  if (loading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-background">
+        <Lottie
+          animationData={animationData}
+          className="w-96"
+          loop={true}
+          autoplay={true}
+        />
+      </div>
+    );
+  }
 
   const handleCheckout = async () => {
     console.log("Creating order");

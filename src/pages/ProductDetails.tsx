@@ -16,6 +16,8 @@ import { useAuthenticatedFetch } from "../hooks/useAuthenticatedFetch";
 import { toast } from "react-hot-toast";
 import { useLanguage } from "../context/LanguageContext";
 import useEmblaCarousel from 'embla-carousel-react'
+import Lottie from "lottie-react";
+import animationData from "../assets/SK.json";
 
 interface Color {
   uuid: string;
@@ -51,6 +53,7 @@ const ProductDetails = () => {
   const { t } = useLanguage();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [emblaRef, emblaApi] = useEmblaCarousel()
+  const [loading, setLoading] = useState(true);
 
   const getData = async () => {
     try {
@@ -61,6 +64,8 @@ const ProductDetails = () => {
       }
     } catch (error) {
       console.error("Error fetching product:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -194,6 +199,19 @@ const ProductDetails = () => {
     return images;
   };
 
+  if (loading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-background">
+        <Lottie
+          animationData={animationData}
+          className="w-96"
+          loop={true}
+          autoplay={true}
+        />
+      </div>
+    );
+  }
+
   if (!product) return <div>{t('common.loading')}</div>;
 
   return (
@@ -265,7 +283,7 @@ const ProductDetails = () => {
                   }`}
                 >
                   <div
-                    className="w-8 h-8 rounded-full border border-gray-200"
+                    className="w-8 h-8 rounded-full border border-gray-700"
                     style={{ backgroundColor: variant.color.hex_code }}
                   />
                 </div>

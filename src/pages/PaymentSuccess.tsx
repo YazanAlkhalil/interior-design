@@ -2,6 +2,8 @@ import { useAuthenticatedFetch } from '../hooks/useAuthenticatedFetch';
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import Lottie from "lottie-react";
+import animationData from "../assets/SK.json";
 
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams();
@@ -59,7 +61,12 @@ export default function PaymentSuccess() {
     <div className="flex items-center justify-center min-h-screen">
       <div className="text-center">
         <div className="mb-4">{t('common.processingPayment')}</div>
-        <div className="animate-spin h-8 w-8 border-4 border-blue-500 rounded-full border-t-transparent mx-auto"></div>
+        <Lottie
+          animationData={animationData}
+          className="w-96"
+          loop={true}
+          autoplay={true}
+        />
       </div>
     </div>
   );
