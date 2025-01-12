@@ -14,6 +14,8 @@ import { motion } from "framer-motion";
 import { useCart } from "../context/CartContext";
 import { useAuthenticatedFetch } from "../hooks/useAuthenticatedFetch";
 import { toast } from "react-hot-toast";
+import { useLanguage } from "../context/LanguageContext";
+import useEmblaCarousel from 'embla-carousel-react'
 
 interface Color {
   uuid: string;
@@ -46,6 +48,9 @@ const ProductDetails = () => {
   const { authFetch } = useAuthenticatedFetch();
   const [userRating, setUserRating] = useState<number | null>(null);
   const [isHovering, setIsHovering] = useState<number | null>(null);
+  const { t } = useLanguage();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [emblaRef, emblaApi] = useEmblaCarousel()
 
   const getData = async () => {
     try {
@@ -53,7 +58,6 @@ const ProductDetails = () => {
       const data = await res.json();
       if (data.status === "success") {
         setProduct(data.data);
-        setSelectedColor(data.data.product_colors[0]); // Set initial color
       }
     } catch (error) {
       console.error("Error fetching product:", error);
@@ -159,16 +163,38 @@ const ProductDetails = () => {
           ))}
         </div>
         <span className="text-sm text-muted-foreground">
-          {userRating ? "Your rating" : "Click to rate"}
+          {userRating ? t('common.yourRating') : t('common.clickToRate')}
         </span>
       </div>
       <p className="text-sm text-muted-foreground">
-        Average rating: {product?.average_rating.toFixed(1) || 0} / 5
+        {t('common.averageRating')}: {product?.average_rating.toFixed(1) || 0} / 5
       </p>
     </div>
   );
 
-  if (!product || !selectedColor) return <div>Loading...</div>;
+  const getCarouselImages = () => {
+    if (!product) return [];
+    
+    const images = [];
+    
+    if (selectedColor?.image) {
+      images.push({
+        src: selectedColor.image,
+        alt: `${product.name} - ${selectedColor.color.hex_code}`
+      });
+    }
+    
+    if (product.image) {
+      images.push({
+        src: product.image,
+        alt: product.name
+      });
+    }
+    
+    return images;
+  };
+
+  if (!product) return <div>{t('common.loading')}</div>;
 
   return (
     <div className="container mx-auto py-8">
@@ -179,43 +205,33 @@ const ProductDetails = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <Carousel className="w-full max-w-xl">
-            <CarouselContent key={selectedColor?.uuid || 'default'}>
-              {/* Show selected color image first if available */}
-              {selectedColor?.image && (
-                <CarouselItem>
+          <Carousel 
+            className="w-full max-w-xl"
+            ref={emblaRef}
+          >
+            <CarouselContent>
+              {getCarouselImages().map((image, index) => (
+                <CarouselItem key={image.src}>
                   <div className="p-1">
                     <Card>
                       <CardContent className="flex aspect-square items-center justify-center p-6">
                         <img
-                          src={selectedColor.image}
-                          alt={`${product.name} - ${selectedColor.color.hex_code}`}
+                          src={image.src}
+                          alt={image.alt}
                           className="w-full h-full object-cover rounded-lg"
                         />
                       </CardContent>
                     </Card>
                   </div>
                 </CarouselItem>
-              )}
-              {/* Show main product image */}
-              {product.image && (
-                <CarouselItem>
-                  <div className="p-1">
-                    <Card>
-                      <CardContent className="flex aspect-square items-center justify-center p-6">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                      </CardContent>
-                    </Card>
-                  </div>
-                </CarouselItem>
-              )}
+              ))}
             </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
+            {getCarouselImages().length > 1 && (
+              <>
+                <CarouselPrevious />
+                <CarouselNext />
+              </>
+            )}
           </Carousel>
         </motion.div>
 
@@ -236,14 +252,14 @@ const ProductDetails = () => {
 
           {/* Color Selection */}
           <div className="space-y-4">
-            <h3 className="font-semibold">Select Color</h3>
+            <h3 className="font-semibold">{t('common.selectColor')}</h3>
             <div className="flex gap-4">
               {product.product_colors.map((variant) => (
                 <div
                   key={variant.uuid}
                   onClick={() => setSelectedColor(variant)}
                   className={`cursor-pointer space-y-2 ${
-                    selectedColor.uuid === variant.uuid
+                    selectedColor?.uuid === variant.uuid
                       ? "ring-2 ring-primary ring-offset-2"
                       : ""
                   }`}
@@ -258,39 +274,50 @@ const ProductDetails = () => {
           </div>
 
           {/* Price and Quantity */}
-          <div className="space-y-4">
-            <div className="text-2xl font-bold">
-              ${parseFloat(selectedColor.price).toFixed(2)}
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="flex items-center border rounded-md">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleQuantityChange('decrease')}
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <span className="w-12 text-center">{quantity}</span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleQuantityChange('increase')}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
+          {selectedColor ? (
+            <div className="space-y-4">
+              <div className="text-2xl font-bold">
+                ${parseFloat(selectedColor.price).toFixed(2)}
               </div>
-              <span className="text-muted-foreground">
-                {selectedColor.quantity} available
-              </span>
+              
+              <div className="flex items-center gap-4">
+                <div className="flex items-center border rounded-md">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleQuantityChange('decrease')}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span className="w-12 text-center">{quantity}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleQuantityChange('increase')}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <span className="text-muted-foreground">
+                  {selectedColor.quantity} {t('common.available')}
+                </span>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="text-muted-foreground">
+              {t('common.selectColorForPrice')}
+            </div>
+          )}
 
           {/* Add to Cart Button */}
-          <Button className="w-full text-white" size="lg" onClick={handleAddToCart}>
+          <Button 
+            className="w-full text-white" 
+            size="lg" 
+            onClick={handleAddToCart}
+            disabled={!selectedColor}
+          >
             <ShoppingCart className="mr-2 h-5 w-5" />
-            Add to Cart
+            {t('common.addToCart')}
           </Button>
         </motion.div>
       </div>

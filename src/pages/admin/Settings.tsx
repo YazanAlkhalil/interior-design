@@ -157,7 +157,7 @@ export default function Settings() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="area_cost">Area Service Cost (per sq. meter)</Label>
+            <Label htmlFor="area_cost">Area Service Cost</Label>
             <Input
               id="area_cost"
               type="number"
@@ -166,7 +166,7 @@ export default function Settings() {
                 ...prev,
                 area_service_cost: e.target.value
               }))}
-              placeholder="Enter cost per square meter"
+              placeholder="Enter cost"
             />
           </div>
           

@@ -36,6 +36,7 @@ import {
   PaginationPrevious,
 } from "../../components/ui/pagination";
 import { toast } from "react-hot-toast";
+// const defaultImage = require('../../assets/images/2.jpeg')
 
 interface Section {
   uuid: string;
@@ -58,7 +59,7 @@ interface ProductColor {
   color: Color;
   price: number;
   quantity: number;
-  image: string | File | undefined;
+  image: string | File | null;
 }
 
 interface Product {
@@ -84,6 +85,8 @@ interface BasicProduct {
   category: string;
   average_rating: number;
 }
+
+// const defaultEditedFile = new File([defaultImage], 'edit.jpg', { type: 'image/jpeg' });
 
 export default function Products() {
   const [products, setProducts] = useState<BasicProduct[]>([]);
@@ -166,19 +169,24 @@ export default function Products() {
       formDataToSend.append('name', formData.name);
       formDataToSend.append('description', formData.description);
       formDataToSend.append('category', formData.category);
+      
       if (selectedImage) {
         formDataToSend.append('image', selectedImage);
       }
 
+      // Append each array item individually
       formData.product_colors.forEach((colorVariant, index) => {
         formDataToSend.append(`hex_codes[${index}]`, colorVariant.color.hex_code);
         formDataToSend.append(`prices[${index}]`, colorVariant.price.toString());
         formDataToSend.append(`quantities[${index}]`, colorVariant.quantity.toString());
-        if (colorVariant.image) {
+        
+        if (colorVariant.image instanceof File) {
+          formDataToSend.append(`existing_images[${index}]`, '');
           formDataToSend.append(`images[${index}]`, colorVariant.image);
+        } else {
+          formDataToSend.append(`existing_images[${index}]`, colorVariant.image || '');
         }
       });
-
 
       const url = editingProduct 
         ? `products/${editingProduct.uuid}/`
@@ -189,15 +197,17 @@ export default function Products() {
         body: formDataToSend,
       });
 
-      if (!response.ok) throw new Error('Failed to save product');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(JSON.stringify(errorData));
+      }
 
-      
       fetchProducts();
-
       setIsDialogOpen(false);
       setSelectedSection("");
       setSelectedImage(null);
       resetForm();
+      toast.success(editingProduct ? 'Product updated successfully' : 'Product created successfully');
     } catch (error) {
       console.error('Error saving product:', error);
       toast.error("Failed to save product");
@@ -321,7 +331,7 @@ export default function Products() {
   };
 
   const handleEditProduct = async (uuid: string) => {
-    setEditLoadingId(uuid); // Set loading state for this specific product
+    setEditLoadingId(uuid);
     try {
       const response = await authFetch(`products/${uuid}/`);
       if (!response.ok) throw new Error('Failed to fetch product details');
@@ -345,21 +355,21 @@ export default function Products() {
         name: fullProduct.name,
         description: fullProduct.description,
         category: fullProduct.category.uuid,
-        image: fullProduct.image ?? null,
+        image: fullProduct.image ?? "",
         product_colors: fullProduct.product_colors.map((pc: any) => ({
           color: { hex_code: pc.color.hex_code },
           price: pc.price,
           quantity: pc.quantity,
-          image: pc.image 
+          image: pc.image || null
         }))
       });
 
       setEditingProduct(fullProduct);
-      setIsDialogOpen(true); // Open the main dialog instead of the separate edit dialog
+      setIsDialogOpen(true);
     } catch (error) {
       console.error('Error fetching product details:', error);
     } finally {
-      setEditLoadingId(null); // Clear loading state
+      setEditLoadingId(null);
     }
   };
 
@@ -404,10 +414,10 @@ export default function Products() {
                   accept="image/*"
                   onChange={handleImageChange}
                 />
-                {imagePreview && (
+                {(imagePreview || (editingProduct && formData.image)) && (
                   <div className="mt-2">
                     <img
-                      src={imagePreview}
+                      src={imagePreview || formData.image}
                       alt="Product preview"
                       className="h-32 w-32 object-cover rounded-md"
                     />
@@ -466,64 +476,66 @@ export default function Products() {
                 </Select>
               </div>
 
-              {/* Color Variant Form */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Add Color Variant</label>
-                <div className="flex gap-4 items-end">
-                  <div className="flex-1">
-                    <Input
-                      type="color"
-                      value={currentColorVariant.hex_code}
-                      onChange={(e) => setCurrentColorVariant(prev => ({
-                        ...prev,
-                        hex_code: e.target.value
-                      }))}
-                    />
+              {/* Color Variant Form - Only show when creating new product */}
+              {!editingProduct && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Add Color Variant</label>
+                  <div className="flex gap-4 items-end">
+                    <div className="flex-1">
+                      <Input
+                        type="color"
+                        value={currentColorVariant.hex_code}
+                        onChange={(e) => setCurrentColorVariant(prev => ({
+                          ...prev,
+                          hex_code: e.target.value
+                        }))}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-sm font-medium block mb-2">Price ($)</label>
+                      <Input
+                        type="number"
+                        placeholder="Price"
+                        value={currentColorVariant.price}
+                        onChange={(e) => setCurrentColorVariant(prev => ({
+                          ...prev,
+                          price: e.target.value
+                        }))}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-sm font-medium block mb-2">Quantity</label>
+                      <Input
+                        type="number"
+                        placeholder="Quantity"
+                        value={currentColorVariant.quantity}
+                        onChange={(e) => setCurrentColorVariant(prev => ({
+                          ...prev,
+                          quantity: e.target.value
+                        }))}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-sm font-medium block mb-2">Image</label>
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          if (e.target.files?.[0]) {
+                            setCurrentColorVariant(prev => ({
+                              ...prev,
+                              image: e.target.files![0]
+                            }));
+                          }
+                        }}
+                      />
+                    </div>
+                    <Button className="text-white" type="button" onClick={handleAddColorVariant}>
+                      Add Variant
+                    </Button>
                   </div>
-                  <div className="flex-1">
-                    <label className="text-sm font-medium block mb-2">Price ($)</label>
-                    <Input
-                      type="number"
-                      placeholder="Price"
-                      value={currentColorVariant.price}
-                      onChange={(e) => setCurrentColorVariant(prev => ({
-                        ...prev,
-                        price: e.target.value
-                      }))}
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <label className="text-sm font-medium block mb-2">Quantity</label>
-                    <Input
-                      type="number"
-                      placeholder="Quantity"
-                      value={currentColorVariant.quantity}
-                      onChange={(e) => setCurrentColorVariant(prev => ({
-                        ...prev,
-                        quantity: e.target.value
-                      }))}
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <label className="text-sm font-medium block mb-2">Image</label>
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        if (e.target.files?.[0]) {
-                          setCurrentColorVariant(prev => ({
-                            ...prev,
-                            image: e.target.files![0]
-                          }));
-                        }
-                      }}
-                    />
-                  </div>
-                  <Button className="text-white" type="button" onClick={handleAddColorVariant}>
-                    Add Variant
-                  </Button>
                 </div>
-              </div>
+              )}
 
               {/* Display Color Variants */}
               <div className="space-y-2">
@@ -534,23 +546,39 @@ export default function Products() {
                       style={{ backgroundColor: variant.color.hex_code }}
                     />
                     <span>${variant.price}</span>
-                    <span>Qty: {variant.quantity}</span>
+                    <div className="flex-1">
+                      <label className="text-sm font-medium block">Quantity</label>
+                      <Input
+                        type="number"
+                        value={variant.quantity}
+                        onChange={(e) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            product_colors: prev.product_colors.map((color, i) => 
+                              i === index ? { ...color, quantity: Number(e.target.value) } : color
+                            )
+                          }));
+                        }}
+                      />
+                    </div>
                     {variant.image && (
                       <img src={variant.image instanceof File ? URL.createObjectURL(variant.image as File) : variant.image} alt="Color variant" className="w-12 h-12 object-cover" />
                     )}
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => {
-                        setFormData(prev => ({
-                          ...prev,
-                          product_colors: prev.product_colors.filter((_, i) => i !== index)
-                        }));
-                      }}
-                    >
-                      Remove
-                    </Button>
+                    {!editingProduct && (
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            product_colors: prev.product_colors.filter((_, i) => i !== index)
+                          }));
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    )}
                   </div>
                 ))}
               </div>

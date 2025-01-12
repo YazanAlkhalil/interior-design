@@ -11,13 +11,14 @@ import {
 import { Label } from "../components/ui/label"
 import { toast } from "react-hot-toast"
 import { useNavigate, useLocation } from "react-router-dom"
-
+import { useLanguage } from "../context/LanguageContext"
 export default function ResetPassword() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state.email;
+  const {t} = useLanguage()
   const handleSubmit = async (e: React.FormEvent) => {
     if (password !== confirmPassword) {
       toast.error('Passwords do not match');
@@ -35,7 +36,7 @@ export default function ResetPassword() {
       toast.error('Password reset failed. Please try again.');
       throw new Error(`HTTP error! status: ${res.status}`);
     }
-    toast.success('Password reset successful!');
+    toast.success(t('auth.passwordResetSuccessful'));
     navigate('/');
   }
 
@@ -43,21 +44,21 @@ export default function ResetPassword() {
     <div className="container flex items-center justify-center min-h-screen">
       <Card className="w-[400px]">
         <CardHeader>
-          <CardTitle>Reset Password</CardTitle>
+          <CardTitle>{t('auth.resetPassword')}</CardTitle>
           <CardDescription>
-            Please enter your new password below.
+            {t('auth.enterNewPassword')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="password">New Password</Label>
+              <Label htmlFor="password">{t('auth.newPassword')}</Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your new password"
+                placeholder={t('auth.enterNewPassword')}
               />
             </div>
             <div className="space-y-2">
@@ -71,7 +72,7 @@ export default function ResetPassword() {
               />
             </div>
             <Button type="submit" className="w-full text-white">
-              Reset Password
+              {t('auth.resetPassword')}
             </Button>
           </form>
         </CardContent>

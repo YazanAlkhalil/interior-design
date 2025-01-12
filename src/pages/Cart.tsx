@@ -21,7 +21,7 @@ import {
 } from "@stripe/react-stripe-js";
 import { Input } from "../components/ui/input";
 import { useNavigate } from "react-router-dom";
-
+import { useLanguage } from "../context/LanguageContext";
 interface CartItem {
   uuid: string;
   product_uuid: string;
@@ -52,6 +52,7 @@ const CheckoutForm = ({ orderUuid }: { orderUuid: string }) => {
   const [paymentMethod, setPaymentMethod] = useState<'STRIPE' | 'PAYPAL'>('STRIPE');
   const { clearCart } = useCart();
   const navigate = useNavigate()
+  const {t} = useLanguage()
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
@@ -111,7 +112,7 @@ const CheckoutForm = ({ orderUuid }: { orderUuid: string }) => {
           onClick={() => setPaymentMethod('STRIPE')}
           className={`flex-1 ${paymentMethod === 'STRIPE' ? 'text-white' : ''}`}
         >
-          Credit Card
+          {t('cart.creditCard')}
         </Button>
         <Button
           type="button"
@@ -119,7 +120,7 @@ const CheckoutForm = ({ orderUuid }: { orderUuid: string }) => {
           onClick={() => setPaymentMethod('PAYPAL')}
           className={`flex-1 ${paymentMethod === 'PAYPAL' ? 'text-white' : ''}`}
         >
-          PayPal
+          {t('cart.paypal')}
         </Button>
       </div>
 
@@ -151,7 +152,7 @@ const CheckoutForm = ({ orderUuid }: { orderUuid: string }) => {
         disabled={paymentMethod === 'STRIPE' ? (!stripe || loading) : loading} 
         className="w-full text-white"
       >
-        {loading ? "Processing..." : paymentMethod === 'PAYPAL' ? "Pay with PayPal" : "Pay with Card"}
+          {loading ? t('cart.processing') : paymentMethod === 'PAYPAL' ? t('cart.payWithPaypal') : t('cart.payWithCard')}
       </Button>
     </form>
   );
@@ -161,7 +162,7 @@ const Cart = () => {
   const [cartData, setCartData] = useState<CartResponse | null>(null);
   const [deletingItem, setDeletingItem] = useState<{ uuid: string; color_hex: string } | null>(null);
   const [orderUuid, setOrderUuid] = useState<string | null>(null);
-
+  const {t, language} = useLanguage()
   const [shippingInfo, setShippingInfo] = useState({
     phone: "",
     email: "",
@@ -245,16 +246,16 @@ const Cart = () => {
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-8">Shopping Cart</h1>
+      <h1 className="text-3xl font-bold mb-8">{t('cart.shoppingCart')}</h1>
 
       {!cartData?.items?.length ? (
         <div className="text-center py-8">
-          <p className="text-muted-foreground">Your cart is empty</p>
+          <p className="text-muted-foreground">{t('cart.yourCartIsEmpty')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <ScrollArea className="h-[600px] pr-4">
+            <ScrollArea className={`h-[600px] ${language === 'ar' ? '[direction:rtl]' : '[direction:ltr]'}`}>
               {cartData.items.map((item, index) => (
                 <motion.div
                   key={item.uuid}
@@ -271,7 +272,7 @@ const Cart = () => {
                   <div className="flex-1">
                     <h3 className="font-semibold">{item.product_name}</h3>
                     <p className="text-sm text-muted-foreground flex items-center gap-2">
-                      Color: <span className="inline-block w-4 h-4 rounded-full border border-gray-200" style={{ backgroundColor: item.color_hex }} />
+                     {t('cart.color')}: <span className="inline-block w-4 h-4 rounded-full border border-gray-200" style={{ backgroundColor: item.color_hex }} />
                     </p>
                     <div className="flex items-center gap-4 mt-2">
                       <div className="flex items-center border rounded-md">
@@ -312,16 +313,16 @@ const Cart = () => {
 
           <div className="lg:col-span-1">
             <div className="border rounded-lg p-6 space-y-4 sticky top-24">
-              <h3 className="text-xl font-semibold">Order Summary</h3>
+              <h3 className="text-xl font-semibold">{t('cart.orderSummary')}</h3>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span>Subtotal</span>
+                  <span>{t('cart.subtotal')}</span>
                   <span>${parseFloat(cartData.subtotal).toFixed(2)}</span>
                 </div>
                 
                 <div className="border-t pt-2 mt-2">
                   <div className="flex justify-between font-semibold">
-                    <span>Total</span>
+                    <span>{t('cart.total')}</span>
                     <span>${parseFloat(cartData.subtotal).toFixed(2)}</span>
                   </div>
                 </div>
@@ -330,27 +331,27 @@ const Cart = () => {
               {!orderUuid && (
                 <div className="space-y-3">
                   <Input
-                    placeholder="Email"
+                    placeholder={t('cart.email')}
                     value={shippingInfo.email}
                     onChange={(e) => setShippingInfo(prev => ({ ...prev, email: e.target.value }))}
                   />
                   <Input
-                    placeholder="Phone"
+                    placeholder={t('cart.phone')}
                     value={shippingInfo.phone}
                     onChange={(e) => setShippingInfo(prev => ({ ...prev, phone: e.target.value }))}
                   />
                   <Input
-                    placeholder="Address"
+                    placeholder={t('cart.address')}
                     value={shippingInfo.address}
                     onChange={(e) => setShippingInfo(prev => ({ ...prev, address: e.target.value }))}
                   />
                   <Input
-                    placeholder="City"
+                    placeholder={t('cart.city')}
                     value={shippingInfo.city}
                     onChange={(e) => setShippingInfo(prev => ({ ...prev, city: e.target.value }))}
                   />
                   <Input
-                    placeholder="Postal Code"
+                    placeholder={t('cart.postalCode')}
                     value={shippingInfo.postal_code}
                     onChange={(e) => setShippingInfo(prev => ({ ...prev, postal_code: e.target.value }))}
                   />
@@ -368,7 +369,7 @@ const Cart = () => {
                   onClick={handleCheckout}
                   disabled={!shippingInfo.email || !shippingInfo.phone || !shippingInfo.address || !shippingInfo.city || !shippingInfo.postal_code}
                 >
-                  Proceed to Checkout
+                  {t('cart.proceedToCheckout')}
                 </Button>
               )}
             </div>
@@ -379,16 +380,16 @@ const Cart = () => {
       <Dialog open={!!deletingItem} onOpenChange={() => setDeletingItem(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogTitle>{t('cart.confirmDeletion')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <p>Are you sure you want to remove this item from your cart? This action cannot be undone.</p>
+            <p>{t('cart.areYouSureYouWantToRemoveThisItemFromYourCartThisActionCannotBeUndone')}</p>
             <div className="flex justify-end space-x-2">
               <Button variant="outline" onClick={() => setDeletingItem(null)}>
-                Cancel
+                {t('cart.cancel')}
               </Button>
               <Button variant="destructive" onClick={confirmDeleteItem}>
-                Delete
+                {t('cart.delete')}
               </Button>
             </div>
           </div>

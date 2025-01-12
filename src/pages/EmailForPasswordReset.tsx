@@ -4,6 +4,7 @@ import { Card, CardHeader, CardContent } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { useAuthenticatedFetch } from '../hooks/useAuthenticatedFetch';
+import { useLanguage } from '../context/LanguageContext';
 
 const EmailForPasswordReset: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -11,7 +12,7 @@ const EmailForPasswordReset: React.FC = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const {authFetch} = useAuthenticatedFetch();
-
+  const {t} = useLanguage()
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -34,7 +35,7 @@ const EmailForPasswordReset: React.FC = () => {
       // Navigate to OTP verification page
       navigate('/verify-otp', { state: { email } });
     } catch (err) {
-      setError('Failed to send OTP. Please try again.');
+      setError(t('auth.failedToSendOTP'));
     } finally {
       setIsLoading(false);
     }
@@ -45,10 +46,10 @@ const EmailForPasswordReset: React.FC = () => {
       <Card className="w-full max-w-md">
         <CardHeader>
           <h2 className="text-3xl font-bold text-center">
-            Reset Password
+            {t('auth.resetPassword')}
           </h2>
           <p className="text-sm text-muted-foreground text-center">
-            Enter your email to receive a verification code
+            {t('auth.enterEmail')}
           </p>
         </CardHeader>
         <CardContent>
@@ -58,7 +59,7 @@ const EmailForPasswordReset: React.FC = () => {
                 id="email"
                 name="email"
                 type="email"
-                placeholder="Email address"
+                placeholder={t('auth.emailPlaceholder')}
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -74,7 +75,7 @@ const EmailForPasswordReset: React.FC = () => {
               disabled={isLoading}
               className="w-full text-white"
             >
-              {isLoading ? 'Sending...' : 'Send Verification Code'}
+              {isLoading ? t('auth.sending') : t('auth.sendVerificationCode')}
             </Button>
           </form>
         </CardContent>

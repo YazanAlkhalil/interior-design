@@ -6,14 +6,15 @@ import { Card, CardHeader, CardContent, CardFooter } from "../components/ui/card
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuthenticatedFetch } from '../hooks/useAuthenticatedFetch';
-
+import { useLanguage } from '../context/LanguageContext';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate()
   const { authFetch } = useAuthenticatedFetch();
-  
+  const {t} = useLanguage()
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -37,7 +38,7 @@ export default function Login() {
       localStorage.setItem('role', data.role);
       console.log(data.role)
       
-      if(data.role === 'ADMIN') {
+      if(data.role === 'DEVELOPER') {
         console.log('developer');
         return navigate('/admin/overview');
       } else {
@@ -46,7 +47,7 @@ export default function Login() {
       }
 
     } catch (error) {
-      toast.error('Login failed. Please try again.');
+      toast.error(t('auth.loginFailed'));
       setIsLoading(false);
     }
   };
@@ -59,13 +60,13 @@ export default function Login() {
   return (
     <div className="container flex items-center justify-center min-h-screen">
       <Card className="w-[400px]">
-        <CardHeader className="text-2xl font-bold text-center text-[#95714f]">
-          Welcome Back
+        <CardHeader className="text-2xl font-bold text-center text-[#27445C]">
+          {t('auth.welcomeBack')}
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('auth.email')}</Label>
               <Input
                 type="email"
                 id="email"
@@ -75,7 +76,7 @@ export default function Login() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('auth.password')}</Label>
               <Input
                 type="password"
                 id="password"
@@ -84,8 +85,8 @@ export default function Login() {
                 required
               />
               <div className="text-right">
-                <Link to="/email" className="text-sm text-[#95714f] hover:underline">
-                  Forgot password?
+                <Link to="/email" className="text-sm text-[#27445C] hover:underline">
+                  {t('auth.forgotPassword')}
                 </Link>
               </div>
             </div>
@@ -93,16 +94,16 @@ export default function Login() {
           <CardFooter className="flex flex-col gap-4">
             <Button 
               type="submit" 
-              className="w-full text-white bg-primary hover:bg-[#7c5e42]"
+              className="w-full text-white"
               disabled={isLoading}
             >
               {isLoading ? (
                 <>
                   <span className="animate-spin mr-2">⭗</span>
-                  Signing in...
+                  {t('auth.signingIn')}
                 </>
               ) : (
-                'Sign In'
+                t('auth.signIn')
               )}
             </Button>
             <Button 
@@ -112,12 +113,12 @@ export default function Login() {
               onClick={handleGuestAccess}
               disabled={isLoading}
             >
-              Continue as Guest
+              {t('auth.continueAsGuest')}
             </Button>
             <div className="w-full text-center">
-              Need an account?{' '}
-              <Link to="/signup" className="text-[#95714f] hover:underline">
-                Sign up
+              {t('auth.needAccount')} {' '}
+              <Link to="/signup" className="text-[#27445C] hover:underline">
+                {t('auth.signUp')}
               </Link>
             </div>
           </CardFooter>

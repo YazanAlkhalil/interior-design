@@ -9,11 +9,12 @@ import {
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "../context/LanguageContext";
 
 interface SectionCard {
   title: string;
   description: string;
-  imageUrl: string;
+  image: string;
   uuid: string;
 }
 
@@ -22,6 +23,7 @@ interface SectionCard {
 const Sections = () => {
   const navigate = useNavigate();
   const { authFetch } = useAuthenticatedFetch();
+  const { t } = useLanguage();
 
   const [sections, setSections] = useState<SectionCard[]>([]);
   useEffect(() => {
@@ -43,10 +45,10 @@ const Sections = () => {
       <div className="space-y-8">
         <div className="text-center">
           <h1 className="text-4xl font-bold tracking-tight">
-            Our Design Sections
+            {t('sections.title')}
           </h1>
           <p className="mt-4 text-muted-foreground">
-            Discover our comprehensive range of design solutions
+            {t('sections.description')}
           </p>
         </div>
 
@@ -68,7 +70,7 @@ const Sections = () => {
               >
                 <div className="h-48 overflow-hidden">
                   <img
-                    src={section.imageUrl}
+                    src={section.image}
                     alt={section.title}
                     className="w-full h-full object-cover"
                   />
@@ -79,7 +81,7 @@ const Sections = () => {
                 </CardHeader>
                 <CardContent>
                   <button className="bg-primary text-white hover:bg-primary/90 px-4 py-2 rounded-md">
-                    Learn More
+                    {t('sections.learnMore')}
                   </button>
                 </CardContent>
               </Card>

@@ -1,12 +1,14 @@
 import { useAuthenticatedFetch } from '../hooks/useAuthenticatedFetch';
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const {authFetch} = useAuthenticatedFetch()
+  const {t} = useLanguage()
 
   useEffect(() => {
     const completePayment = async () => {
@@ -14,6 +16,7 @@ export default function PaymentSuccess() {
         const paymentId = searchParams.get('paymentId');
         const PayerID = searchParams.get('PayerID');
         const payment_uuid = searchParams.get('payment_uuid');
+
 
         if (!paymentId || !PayerID || !payment_uuid) {
           throw new Error('Missing required payment parameters');
@@ -31,7 +34,7 @@ export default function PaymentSuccess() {
         // Payment successful, redirect to orders page or show success message
         navigate('/home');
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Payment completion failed');
+        setError(err instanceof Error ? err.message : t('common.paymentFailed'));
       }
     };
 
@@ -46,7 +49,7 @@ export default function PaymentSuccess() {
           onClick={() => navigate('/cart')}
           className="text-blue-500 hover:underline"
         >
-          Return to Cart
+          {t('common.returnToCart')}
         </button>
       </div>
     );
@@ -55,7 +58,7 @@ export default function PaymentSuccess() {
   return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="text-center">
-        <div className="mb-4">Processing your payment...</div>
+        <div className="mb-4">{t('common.processingPayment')}</div>
         <div className="animate-spin h-8 w-8 border-4 border-blue-500 rounded-full border-t-transparent mx-auto"></div>
       </div>
     </div>

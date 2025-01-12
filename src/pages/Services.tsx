@@ -2,7 +2,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "../components/ui/card
 import { Button } from "../components/ui/button";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-
+import { useLanguage } from "../context/LanguageContext";
 // You can move this to a separate types file
 export interface Service {
   id: string;
@@ -13,59 +13,61 @@ export interface Service {
 }
 
 // You can move this to a separate data file
-const services = [
-  {
-    id: "1",
-    title: "Design service",
-    description: "Our expert designers will work with you to create a personalized design plan that fits your style and budget.",
-    image: require('../assets/images/2.jpeg'),
-    icon: "✏️",
-    url:"services/interior-design",
-  },
-  {
-    id: "2",
-    title: "Consultation service",
-    description: "Get professional advice and guidance on your interior design project with our consultation service.",
-    image: require('../assets/images/super.webp'),
-    url:"services/consultation",
-    icon: "💬",
-  },
-  {
-    id: "3",
-    title: "Implementation service",
-    description: "We'll handle the entire implementation process, from sourcing materials to coordinating with contractors.",
-    image: require('../assets/images/implement.jpg'),
-    icon: "🔨",
-    url:"services/implementation",
-  },
-  {
-    id: "4",
-    title: "Area service",
-    description: "Our area-specific services cater to the unique design needs of different spaces, from kitchens to bedrooms.",
-    image: require('../assets/images/Design.png'),
-    icon: "🏠",
-    url:"services/area",
-  },
-  {
-    id: "5",
-    title: "Supervision service",
-    description: "We'll oversee the entire project from start to finish, ensuring that everything is completed to your satisfaction.",
-    image: require('../assets/images/Choose-best-Interior-Designer-1.webp'),
-    icon: "📝",
-    url:"services/supervision",
-  },
-]
 
 const Services = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
+
+  const services = [
+    {
+      id: "1",
+      title: t('home.designService'),
+      description: t('home.designServiceDescription'),
+      image: require('../assets/images/design_service.jpg'),
+      icon: "✏️",
+      url:"services/interior-design",
+    },
+    {
+      id: "2",
+      title: t('home.consultationService'),
+      description: t('home.consultationServiceDescription'),
+      image: require('../assets/images/consulting_service.png'),
+      url:"services/consultation",
+      icon: "💬",
+    },
+    {
+      id: "3",
+      title: t('home.implementationService'),
+      description: t('home.implementationServiceDescription'),
+      image: require('../assets/images/implement_service.jpg'),
+      icon: "🔨",
+      url:"services/implementation",
+    },
+    {
+      id: "4",
+      title: t('home.areaService'),
+      description: t('home.areaServiceDescription'),
+      image: require('../assets/images/area_service.jpg'),
+      icon: "🏠",
+      url:"services/area",
+    },
+    {
+      id: "5",
+      title: t('home.supervisionService'),
+      description: t('home.supervisionServiceDescription'),
+      image: require('../assets/images/supervision_service.jpg'),
+      icon: "📝",
+      url:"services/supervision",
+    },
+  ]
 
   return (
     <div className="container mx-auto py-8">
       <div className="space-y-8">
         <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold">Our Services</h1>
+          <h1 className="text-4xl font-bold">{t('services.title')}</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Discover our range of professional services designed to help you create your perfect space.
+            {t('services.description')}
           </p>
         </div>
 
@@ -104,7 +106,7 @@ const Services = () => {
                     className="w-full text-white"
                     onClick={() => navigate(`/home/services/${service.id}`)}
                   >
-                    Book Service
+                    {t('services.bookService')}
                   </Button>
                 </CardFooter>
               </Card>

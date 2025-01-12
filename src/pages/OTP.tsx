@@ -15,7 +15,7 @@ import {
 } from "../components/ui/card";
 import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-
+import { useLanguage } from "../context/LanguageContext";
 export default function OTPVerification() {
   const [otp, setOtp] = useState("");
   const [timer, setTimer] = useState(60);
@@ -23,6 +23,7 @@ export default function OTPVerification() {
   const location = useLocation();
   const email = location.state?.email;
   const navigate = useNavigate();
+  const {t} = useLanguage()
   console.log(email);
 
   useEffect(() => {
@@ -78,15 +79,15 @@ export default function OTPVerification() {
         });
         if (!res.ok) {
           const errorData = await res.json();
-          toast.error(errorData.message || 'Something went wrong');
+          toast.error(errorData.message || t('auth.somethingWentWrong'));
           throw new Error(`HTTP error! status: ${res.status}`);
         }
         navigate('/');
         const data = await res.json();
-        toast.success('Email verified successfully!');
+        toast.success(t('auth.emailVerifiedSuccessfully'));
         
       } catch (error) {
-        toast.error('Email verification failed. Please try again.');
+        toast.error(t('auth.emailVerificationFailed'));
         
       }
   };
@@ -96,7 +97,7 @@ export default function OTPVerification() {
         <CardHeader>
           <CardTitle>Verification Required</CardTitle>
           <CardDescription>
-            Please enter the 6-digit code sent to your device
+            {t('auth.otpDescription')}
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -125,10 +126,10 @@ export default function OTPVerification() {
                 onClick={() => setOtp("")}
                 type="button"
               >
-                Clear
+                {t('auth.clear')}
               </Button>
               <Button type="submit" className="text-white bg-primary">
-                Verify
+                {t('auth.verify')}
               </Button>
             </div>
             <div className="flex w-full justify-center">
@@ -138,7 +139,7 @@ export default function OTPVerification() {
                 disabled={isResendDisabled}
                 type="button"
               >
-                Resend OTP {timer > 0 && `(${timer}s)`}
+                {t('auth.resendOTP')} {timer > 0 && `(${timer}s)`}
               </Button>
             </div>
           </CardFooter>

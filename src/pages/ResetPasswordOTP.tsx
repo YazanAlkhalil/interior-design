@@ -15,6 +15,9 @@ import {
 } from "../components/ui/card";
 import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useLanguage } from "../context/LanguageContext";
+
+
 
 export default function ResetPasswordOTP() {
   const [otp, setOtp] = useState("");
@@ -23,6 +26,7 @@ export default function ResetPasswordOTP() {
   const location = useLocation();
   const email = location.state?.email;
   const navigate = useNavigate();
+  const { t } = useLanguage();
   console.log(email);
 
   useEffect(() => {
@@ -50,14 +54,14 @@ export default function ResetPasswordOTP() {
       
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.message || 'Failed to resend OTP');
+        throw new Error(errorData.message || t('auth.failedToResendOTP'));
       }
       
-      toast.success('OTP resent successfully!');
+      toast.success(t('auth.otpResentSuccessfully'));
       setTimer(60);
       setIsResendDisabled(true);
     } catch (error) {
-      toast.error('Failed to resend OTP. Please try again.');
+      toast.error(t('auth.failedToResendOTP'));
     }
   };
 
@@ -83,10 +87,10 @@ export default function ResetPasswordOTP() {
         }
         navigate('/reset-password', {state: {email}});
         const data = await res.json();
-        toast.success('Email verified successfully!');
+        toast.success(t('auth.emailVerifiedSuccessfully'));
         
       } catch (error) {
-        toast.error('Email verification failed. Please try again.');
+        toast.error(t('auth.emailVerificationFailed'));
         
       }
   };
@@ -94,9 +98,9 @@ export default function ResetPasswordOTP() {
     <div className="flex items-center justify-center min-h-screen bg-background">
       <Card className="w-[400px]">
         <CardHeader>
-          <CardTitle>Verification Required</CardTitle>
+          <CardTitle>{t('auth.verificationRequired')}</CardTitle>
           <CardDescription>
-            Please enter the 6-digit code sent to your device
+            {t('auth.enterOTP')}
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -124,10 +128,10 @@ export default function ResetPasswordOTP() {
                 variant="outline"
                 onClick={() => setOtp("")}
               >
-                Clear
+                {t('auth.clear')}
               </Button>
               <Button type="submit" className="text-white bg-primary">
-                Verify
+                {t('auth.verify')}
               </Button>
             </div>
             <div className="flex w-full justify-center">
@@ -137,7 +141,7 @@ export default function ResetPasswordOTP() {
                 disabled={isResendDisabled}
                 type="button"
               >
-                Resend OTP {timer > 0 && `(${timer}s)`}
+                {t('auth.resendOTP')} {timer > 0 && `(${timer}s)`}
               </Button>
             </div>
           </CardFooter>

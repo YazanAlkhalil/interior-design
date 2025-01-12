@@ -9,27 +9,14 @@ import { useAuthenticatedFetch } from "../hooks/useAuthenticatedFetch"
 
 
 
-const recentSales = [
-    {
-      name: "Olivia Martin",
-      email: "olivia.martin@email.com",
-      amount: "1,999.00",
-      avatar: "/avatars/olivia.png"
-    },
-    {
-      name: "Jackson Lee",
-      email: "jackson.lee@email.com",
-      amount: "39.00",
-      avatar: "/avatars/jackson.png"
-    },
     // Add more sales data...
-  ]
   
   // Add interface for dashboard data
   interface DashboardData {
     total_sales: string;
-    active_employees: number;
+    total_employees: number;
     active_clients: number;
+    active_users: number,
     monthly_sales: { [key: string]: string };
     monthly_clients: { [key: string]: number };
   }
@@ -38,8 +25,9 @@ const recentSales = [
     const { authFetch } = useAuthenticatedFetch();
     const [dashboardData, setDashboardData] = useState<DashboardData>({
       total_sales: "0",
-      active_employees: 0,
+      total_employees: 0,
       active_clients: 0,
+      active_users: 0 ,
       monthly_sales: {},
       monthly_clients: {}
     });
@@ -112,7 +100,7 @@ const recentSales = [
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{dashboardData.active_employees}</div>
+                  <div className="text-2xl font-bold">{dashboardData.total_employees}</div>
                   <p className="text-xs text-muted-foreground">Current active employees</p>
                 </CardContent>
               </Card>
@@ -134,8 +122,8 @@ const recentSales = [
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">573</div>
-                  <p className="text-xs text-muted-foreground">+201 since last hour</p>
+                  <div className="text-2xl font-bold">{dashboardData.active_users}</div>
+                  <p className="text-xs text-muted-foreground">Users online now</p>
                 </CardContent>
               </Card>
             </div>

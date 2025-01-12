@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Textarea } from "../../components/ui/textarea";
@@ -18,41 +18,18 @@ import {
   DialogTrigger,
 } from "../../components/ui/dialog";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import { useAuthenticatedFetch } from "../../hooks/useAuthenticatedFetch";
 
 interface Plan {
-  id: string;
-  name: string;
+  uuid: string;
+  title: string;
   description: string;
   price: number;
 }
 
 export default function Plans() {
-  const [plans, setPlans] = useState<Plan[]>([
-    {
-      id: "1",
-      name: "Basic Plan",
-      description: "Perfect for individuals and small projects",
-      price: 9.99
-    },
-    {
-      id: "2",
-      name: "Professional Plan",
-      description: "Ideal for growing businesses with advanced features",
-      price: 29.99
-    },
-    {
-      id: "3",
-      name: "Enterprise Plan",
-      description: "Complete solution for large organizations with premium support",
-      price: 99.99
-    },
-    {
-      id: "4",
-      name: "Starter Plan",
-      description: "Great for beginners to get started with essential features",
-      price: 4.99
-    }
-  ]);
+  const { authFetch, isLoading } = useAuthenticatedFetch();
+  const [plans, setPlans] = useState<Plan[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [formData, setFormData] = useState({
@@ -61,31 +38,56 @@ export default function Plans() {
     price: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingPlan) {
-      // Update existing plan
-      setPlans(
-        plans.map((plan) =>
-          plan.id === editingPlan.id
-            ? {
-                ...plan,
-                ...formData,
-                price: parseFloat(formData.price),
-              }
-            : plan
-        )
-      );
-    } else {
-      // Add new plan
-      const newPlan: Plan = {
-        id: crypto.randomUUID(),
-        ...formData,
-        price: parseFloat(formData.price),
-      };
-      setPlans([...plans, newPlan]);
+  useEffect(() => {
+    fetchPlans();
+  }, []);
+
+  const fetchPlans = async () => {
+    try {
+      const response = await authFetch('plans/');
+      if (response.ok) {
+        const data = await response.json();
+        setPlans(data.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching plans:', error);
     }
-    handleClose();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingPlan) {
+        // Update existing plan
+        const response = await authFetch(`plans/${editingPlan.uuid}/`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            title: formData.name,
+            description: formData.description,
+            price: formData.price,
+          }),
+        });
+        if (response.ok) {
+          fetchPlans(); // Refresh plans after update
+        }
+      } else {
+        // Add new plan
+        const response = await authFetch('plans/', {
+          method: 'POST',
+          body: JSON.stringify({
+            title: formData.name,
+            description: formData.description,
+            price: formData.price,
+          }),
+        });
+        if (response.ok) {
+          fetchPlans(); // Refresh plans after creation
+        }
+      }
+      handleClose();
+    } catch (error) {
+      console.error('Error saving plan:', error);
+    }
   };
 
   const handleClose = () => {
@@ -97,15 +99,24 @@ export default function Plans() {
   const handleEdit = (plan: Plan) => {
     setEditingPlan(plan);
     setFormData({
-      name: plan.name,
+      name: plan.title,
       description: plan.description,
       price: plan.price.toString(),
     });
     setIsOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setPlans(plans.filter((plan) => plan.id !== id));
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await authFetch(`plans/${id}/`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        fetchPlans(); // Refresh plans after deletion
+      }
+    } catch (error) {
+      console.error('Error deleting plan:', error);
+    }
   };
 
   return (
@@ -176,8 +187,8 @@ export default function Plans() {
         </TableHeader>
         <TableBody>
           {plans.map((plan) => (
-            <TableRow key={plan.id}>
-              <TableCell>{plan.name}</TableCell>
+            <TableRow key={plan.uuid}>
+              <TableCell>{plan.title}</TableCell>
               <TableCell>{plan.description}</TableCell>
               <TableCell>${plan.price}</TableCell>
               <TableCell className="space-x-2">
@@ -191,7 +202,7 @@ export default function Plans() {
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={() => handleDelete(plan.id)}
+                  onClick={() => handleDelete(plan.uuid)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>

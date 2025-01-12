@@ -8,6 +8,7 @@ import { TopProducts } from "../components/shared/TopProduct";
 import { useAuthenticatedFetch } from "../hooks/useAuthenticatedFetch";
 import { useInView } from 'react-intersection-observer';
 import { Skeleton } from "../components/ui/skeleton";
+import { useLanguage } from "../context/LanguageContext";
 
 const SectionProducts = () => {
   const { sectionId } = useParams();
@@ -20,6 +21,7 @@ const SectionProducts = () => {
   const [hasMore, setHasMore] = useState(true);
   const { ref, inView } = useInView();
   const [isLoading, setIsLoading] = useState(true);
+  const { t } = useLanguage();
   
   const filteredProducts = products;
   const formatSectionTitle = (title: string) => {
@@ -32,7 +34,7 @@ const SectionProducts = () => {
     const categoryQuery = selectedCategory === "all" 
       ? "" 
       : `category=${selectedCategory}`;
-    const res = await authFetch(`products/?${categoryQuery}&page=${pageNumber}`);
+    const res = await authFetch(`products/?section=${sectionId}&${categoryQuery}&page=${pageNumber}`);
     const data = await res.json();
     
     if (pageNumber === 1) {
@@ -55,7 +57,7 @@ const SectionProducts = () => {
     let apiCategories = await res.json();
     apiCategories = apiCategories.categories;
     setCategories([
-      { uuid: 'all', title: 'All' },
+      { uuid: 'all', title: t('common.all') },
       ...apiCategories
     ]);
   }
@@ -91,7 +93,7 @@ const SectionProducts = () => {
             <Skeleton className="h-10 w-64" />
           ) : (
             <h1 className="text-3xl font-bold">
-              {formatSectionTitle(sectionTitle ?? '')} Products
+              {formatSectionTitle(sectionTitle ?? '')} {t('common.products')}
             </h1>
           )}
           
@@ -146,7 +148,7 @@ const SectionProducts = () => {
               </motion.div>
             ))
           ) : (
-            filteredProducts.map((product, index) => (
+            filteredProducts.map((product: any, index: any) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 20 }}

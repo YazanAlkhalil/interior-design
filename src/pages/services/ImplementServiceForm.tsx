@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -27,11 +27,13 @@ import {
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "../../lib/utils";
+import { useAuthenticatedFetch } from "../../hooks/useAuthenticatedFetch";
+import { toast } from "react-hot-toast";
+import { useLanguage } from "../../context/LanguageContext";
 
-// Mock data - Move to a separate file in production
-const sections = ["Living Room", "Bedroom", "Kitchen", "Bathroom", "Office"];
 
 interface FormData {
+  title: string;
   section: string;
   startDate: Date | null;
   endDate: Date | null;
@@ -41,11 +43,18 @@ interface FormData {
   phoneNumber: string;
   email: string;
   address: string;
+  city: string;
   notes: string;
 }
 
 const ImplementServiceForm = () => {
+  const { t, language } = useLanguage();
+  const rtlClass = language === 'ar' ? '[direction:rtl]' : '';
+  const { authFetch } = useAuthenticatedFetch();
+  const [sections, setSections] = useState<{ uuid: string; title: string; }[]>([]);
+  
   const [formData, setFormData] = useState<FormData>({
+    title: "",
     section: "",
     startDate: null,
     endDate: null,
@@ -55,18 +64,76 @@ const ImplementServiceForm = () => {
     phoneNumber: "",
     email: "",
     address: "",
+    city: "",
     notes: "",
   });
+
+  // Add useEffect to fetch sections
+  useEffect(() => {
+    const fetchSections = async () => {
+      try {
+        const response = await authFetch("sections/?page_size=100");
+        const data = await response.json();
+        setSections(data.results || []);
+      } catch (error) {
+        console.error("Error fetching sections:", error);
+        toast.error("Failed to fetch sections");
+        setSections([]);
+      }
+    };
+    fetchSections();
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: keyof FormData) => {
     const file = e.target.files ? e.target.files[0] : null;
     setFormData((prev) => ({ ...prev, [field]: file }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    // Add your form submission logic here
+    
+    // Validate required fields
+    if (!formData.title || 
+        !formData.section || 
+        !formData.startDate || 
+        !formData.endDate || 
+        !formData.area || 
+        !formData.phoneNumber || 
+        !formData.email || 
+        !formData.address) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    const formDataToSend = new FormData();
+    formDataToSend.append('title', formData.title);
+    formDataToSend.append('notes', formData.notes);
+    formDataToSend.append('start_date', format(formData.startDate!, 'yyyy-MM-dd'));
+    formDataToSend.append('end_date', format(formData.endDate!, 'yyyy-MM-dd'));
+    formDataToSend.append('section', formData.section);
+    formDataToSend.append('area', formData.area);
+    formDataToSend.append('city', formData.city);
+    if (formData.areaFile) formDataToSend.append('area_file', formData.areaFile);
+    if (formData.designFile) formDataToSend.append('design_file', formData.designFile);
+    formDataToSend.append('address', formData.address);
+    formDataToSend.append('email', formData.email);
+    formDataToSend.append('phone_number', formData.phoneNumber);
+
+    try {
+      const response = await authFetch("implementaion-service/", {
+        method: "POST",
+        body: formDataToSend,
+      });
+      
+      if (response.ok) {
+        toast.success("Implementation service request submitted successfully!");
+      } else {
+        const data = await response.json();
+        toast.error(data.message || "Failed to submit request");
+      }
+    } catch (error) {
+      toast.error("An error occurred while submitting the request");
+    }
   };
 
   return (
@@ -78,38 +145,59 @@ const ImplementServiceForm = () => {
       >
         <Card className="max-w-3xl mx-auto">
           <CardHeader>
-            <CardTitle>Implement Service Booking</CardTitle>
+            <CardTitle>{t('services.implementServiceBooking')}</CardTitle>
             <CardDescription>
-              Provide your project details to start the implementation.
+              {t('services.provideProjectDetailsForImplementation')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Title Input */}
+              <div className="space-y-2">
+                <Label htmlFor="title">{t('services.projectTitle')}</Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, title: e.target.value }))
+                  }
+                  placeholder={t('services.enterProjectTitle')}
+                  required
+                  className={rtlClass}
+                />
+              </div>
+
               {/* Section Selection */}
               <div className="space-y-2">
-                <Label htmlFor="section">Select a Section</Label>
+                <Label htmlFor="section">{t('services.selectSection')}</Label>
                 <Select
                   value={formData.section}
                   onValueChange={(value) =>
                     setFormData((prev) => ({ ...prev, section: value }))
                   }
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a section" />
+                  <SelectTrigger className={rtlClass}>
+                    <SelectValue placeholder={t('services.selectSection')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {sections.map((section) => (
-                      <SelectItem key={section} value={section.toLowerCase()}>
-                        {section}
+                    {sections && sections.length > 0 ? (
+                      sections.map((section) => (
+                        <SelectItem key={section.uuid} value={section.uuid}>
+                          {section.title}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-sections" disabled>
+                        {t('services.noSectionsAvailable')}
                       </SelectItem>
-                    ))}
+                    )}
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Project Start Date */}
               <div className="space-y-2">
-                <Label>Project Start Date</Label>
+                <Label>{t('services.projectStartDate')}</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -120,7 +208,7 @@ const ImplementServiceForm = () => {
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.startDate ? format(formData.startDate, "PPP") : <span>Pick a start date</span>}
+                      {formData.startDate ? format(formData.startDate, "PPP") : <span>{t('services.pickStartDate')}</span>}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -136,7 +224,7 @@ const ImplementServiceForm = () => {
 
               {/* Project End Date */}
               <div className="space-y-2">
-                <Label>Project End Date</Label>
+                <Label>{t('services.projectEndDate')}</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -147,7 +235,7 @@ const ImplementServiceForm = () => {
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.endDate ? format(formData.endDate, "PPP") : <span>Pick an end date</span>}
+                      {formData.endDate ? format(formData.endDate, "PPP") : <span>{t('services.pickEndDate')}</span>}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -163,7 +251,7 @@ const ImplementServiceForm = () => {
 
               {/* Area of the Place */}
               <div className="space-y-2">
-                <Label htmlFor="area">Area of the Place (sq ft)</Label>
+                <Label htmlFor="area">{t('services.areaOfPlace')}</Label>
                 <Input
                   id="area"
                   type="text"
@@ -171,49 +259,52 @@ const ImplementServiceForm = () => {
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, area: e.target.value }))
                   }
-                  placeholder="Enter the area in square feet"
+                  placeholder={t('services.enterArea')}
+                  className={rtlClass}
                 />
               </div>
 
               {/* Area File Input */}
               <div className="space-y-2">
-                <Label htmlFor="areaFile">Area File</Label>
+                <Label htmlFor="areaFile">{t('services.areaFile')}</Label>
                 <div className="flex gap-4 items-end">
                   <Input
                     id="areaFile"
                     type="file"
                     onChange={(e) => handleFileChange(e, "areaFile")}
+                    className={rtlClass}
                   />
                   <Button 
                     variant="outline"
                     onClick={() => window.location.href = '/home/services/area'}
                   >
-                    Book Area Service
+                    {t('services.bookAreaService')}
                   </Button>
                 </div>
               </div>
 
               {/* Design File Input */}
               <div className="space-y-2">
-                <Label htmlFor="designFile">Design File</Label>
+                <Label htmlFor="designFile">{t('services.designFile')}</Label>
                 <div className="flex gap-4 items-end">
                   <Input
                     id="designFile"
                     type="file"
                     onChange={(e) => handleFileChange(e, "designFile")}
+                    className={rtlClass}
                   />
                   <Button 
                     variant="outline"
                     onClick={() => window.location.href = '/home/services/interior-design'}
                   >
-                    Book Design Service
+                    {t('services.bookDesignService')}
                   </Button>
                 </div>
               </div>
 
-              {/* Phone Number */}
+              {/* Contact Information */}
               <div className="space-y-2">
-                <Label htmlFor="phoneNumber">Phone Number</Label>
+                <Label htmlFor="phoneNumber">{t('services.phoneNumber')}</Label>
                 <Input
                   id="phoneNumber"
                   type="tel"
@@ -221,14 +312,14 @@ const ImplementServiceForm = () => {
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, phoneNumber: e.target.value }))
                   }
-                  placeholder="Enter your phone number"
+                  placeholder={t('services.enterPhoneNumber')}
                   required
+                  className={rtlClass}
                 />
               </div>
 
-              {/* Email */}
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('services.email')}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -236,43 +327,59 @@ const ImplementServiceForm = () => {
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, email: e.target.value }))
                   }
-                  placeholder="Enter your email"
+                  placeholder={t('services.enterEmail')}
                   required
+                  className={rtlClass}
                 />
               </div>
 
-              {/* Address */}
               <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
+                <Label htmlFor="address">{t('services.address')}</Label>
                 <Input
                   id="address"
                   value={formData.address}
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, address: e.target.value }))
                   }
-                  placeholder="Enter your address"
+                  placeholder={t('services.enterAddress')}
                   required
+                  className={rtlClass}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="city">{t('services.city')}</Label>
+                <Input
+                  id="city"
+                  value={formData.city}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, city: e.target.value }))
+                  }
+                  placeholder={t('services.enterCity')}
+                  required
+                  className={rtlClass}
                 />
               </div>
 
               {/* Notes */}
               <div className="space-y-2">
-                <Label htmlFor="notes">Additional Notes</Label>
+                <Label htmlFor="notes">{t('services.additionalNotes')}</Label>
                 <Textarea
                   id="notes"
                   value={formData.notes}
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, notes: e.target.value }))
                   }
-                  placeholder="Any specific requirements or preferences..."
+                  placeholder={t('services.anySpecificRequirementsOrPreferences')}
                   rows={4}
+                  className={rtlClass}
                 />
               </div>
 
               {/* Submit Button */}
               <div className="flex justify-end pt-4">
                 <Button className="text-white" type="submit" size="lg">
-                  Submit Implementation Request
+                  {t('services.submitImplementationRequest')}
                 </Button>
               </div>
             </form>

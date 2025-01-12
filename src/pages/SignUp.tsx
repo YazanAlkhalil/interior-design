@@ -5,7 +5,7 @@ import { Label } from "../components/ui/label";
 import { Card, CardHeader, CardContent, CardFooter } from "../components/ui/card";
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-
+import { useLanguage } from "../context/LanguageContext";
 export default function SignUp() {
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
@@ -17,6 +17,7 @@ export default function SignUp() {
   const [address, setAddress] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const {t} = useLanguage()
   const handleNextStep = (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
@@ -57,11 +58,11 @@ export default function SignUp() {
         }
         
         const data = await res.json();
-        toast.success('Account created successfully! Please verify your email.');
+        toast.success(t('auth.accountCreatedSuccessfully'));
         navigate('/otp', { state: { email } });
         
       } catch (error) {
-        toast.error('Registration failed. Please try again.');
+        toast.error(t('auth.registrationFailed'));
         setIsLoading(false);
       }
     }
@@ -70,14 +71,14 @@ export default function SignUp() {
   return (
     <div className="container flex items-center justify-center min-h-screen">
       <Card className="w-[400px]">
-        <CardHeader className="text-2xl font-bold text-center text-[#95714f]">
-          Create Account {step === 2 && '- Personal Info'}
+        <CardHeader className="text-2xl font-bold text-center text-[#27445C]">
+          {t('auth.createAccount')} {step === 2 && '- ' + t('auth.personalInfo')}
         </CardHeader>
         {step === 1 ? (
           <form onSubmit={handleNextStep}>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="signup-email">Email</Label>
+                <Label htmlFor="signup-email">{t('auth.email')}</Label>
                 <Input
                   type="email"
                   id="signup-email"
@@ -87,7 +88,7 @@ export default function SignUp() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="signup-password">Password</Label>
+                <Label htmlFor="signup-password">{t('auth.password')}</Label>
                 <Input
                   type="password"
                   id="signup-password"
@@ -97,7 +98,7 @@ export default function SignUp() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirm Password</Label>
+                <Label htmlFor="confirm-password">{t('auth.confirmPassword')}</Label>
                 <Input
                   type="password"
                   id="confirm-password"
@@ -110,22 +111,22 @@ export default function SignUp() {
             <CardFooter className="flex flex-col gap-4">
               <Button 
                 type="submit" 
-                className="w-full text-white bg-[#95714f] hover:bg-[#7c5e42]"
+                className="w-full text-white"
                 disabled={isLoading}
               >
                 {isLoading ? (
                   <>
                     <span className="animate-spin mr-2">⭗</span>
-                    Creating Account...
+                    {t('auth.creatingAccount')}
                   </>
                 ) : (
-                  'Next Step'
+                  t('auth.nextStep')
                 )}
               </Button>
               <div className="w-full text-center">
-                Already have an account?{' '}
-                <Link to="/" className="text-[#95714f] hover:underline">
-                  Sign in
+                {t('auth.alreadyHaveAccount')} {' '}
+                <Link to="/" className="text-[#27445C] hover:underline">
+                    {t('auth.signIn')}
                 </Link>
               </div>
             </CardFooter>
@@ -134,7 +135,7 @@ export default function SignUp() {
           <form onSubmit={handleSignUp}>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
+                <Label htmlFor="firstName">{t('auth.firstName')}</Label>
                 <Input
                   type="text"
                   id="firstName"
@@ -144,7 +145,7 @@ export default function SignUp() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
+                <Label htmlFor="lastName">{t('auth.lastName')}</Label>
                 <Input
                   type="text"
                   id="lastName"
@@ -154,7 +155,7 @@ export default function SignUp() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
+                <Label htmlFor="phone">{t('auth.phone')}</Label>
                 <Input
                   type="tel"
                   id="phone"
@@ -164,7 +165,7 @@ export default function SignUp() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
+                <Label htmlFor="address">{t('auth.address')}</Label>
                 <Input
                   type="text"
                   id="address"
@@ -177,16 +178,16 @@ export default function SignUp() {
             <CardFooter className="flex flex-col gap-4">
               <Button 
                 type="submit" 
-                className="w-full text-white bg-[#95714f] hover:bg-[#7c5e42]"
+                className="w-full text-white"
                 disabled={isLoading}
               >
                 {isLoading ? (
                   <>
                     <span className="animate-spin mr-2">⭗</span>
-                    Creating Account...
+                    {t('auth.creatingAccount')}
                   </>
                 ) : (
-                  'Create Account'
+                  t('auth.createAccount')
                 )}
               </Button>
               <Button 
@@ -196,7 +197,7 @@ export default function SignUp() {
                 className="w-full"
                 disabled={isLoading}
               >
-                Back
+                {t('auth.back')}
               </Button>
             </CardFooter>
           </form>

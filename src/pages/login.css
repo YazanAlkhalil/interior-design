@@ -16,7 +16,7 @@
   }
   
   .loginCard h1 {
-    color: #95714f;
+    color: #27445C;
     text-align: center;
     margin-bottom: 2rem;
     font-size: 2rem;
@@ -44,13 +44,13 @@
   
   .inputGroup input:focus {
     outline: none;
-    border-color: #95714f;
+    border-color: #27445C;
   }
   
   button {
     width: 100%;
     padding: 0.75rem;
-    background-color: #95714f;
+    background-color: #27445C;
     color: white;
     border: none;
     border-radius: 4px;
@@ -69,7 +69,7 @@
   }
   
   .forgotPassword a {
-    color: #95714f;
+    color: #27445C;
     text-decoration: none;
   }
   
