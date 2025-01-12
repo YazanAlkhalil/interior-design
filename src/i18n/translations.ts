@@ -3,8 +3,11 @@ export const translations = {
     common: {
       search: "Search",
       complaints: "Complaints",
+      contactInfo: "Contact Info",
       selectColorForPrice: "Select Color for Price",
       submitting: "Submitting...",
+      followUs: "Follow Us",
+      moreLinks: "More Links",
       add: "Add",
       edit: "Edit",
       delete: "Delete",
@@ -53,6 +56,7 @@ export const translations = {
       },
       viewDetails: "View Details",
       contactInfo: "Contact Information",
+      
       orderDetails: "Order Details",
       total: "Total",
       updateStatus: "Update Status"
@@ -261,6 +265,10 @@ export const translations = {
   ar: {
     common: {
       search: "بحث",
+      contactInfo: "تواصل معنا",
+      followUs: "تابعنا",
+      moreLinks: "المزيد من الروابط",
+
       complaints: "الشكاوى",
       submit: "إرسال",
       add: "إضافة",

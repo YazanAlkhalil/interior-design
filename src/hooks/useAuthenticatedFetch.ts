@@ -12,7 +12,7 @@ export const useAuthenticatedFetch = () => {
   const refreshAccessToken = async () => {
     try {
       const refresh = localStorage.getItem('refresh');
-      const response = await fetch('http://45.9.191.191/api/v1/refresh/', {
+      const response = await fetch('https://45.9.191.191/api/v1/refresh/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

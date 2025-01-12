@@ -12,6 +12,16 @@ import {
   LogOut,
   ClipboardList,
   MessageSquare,
+  Phone,
+  Mail,
+  Facebook,
+  Linkedin,
+  Paintbrush,
+  Youtube,
+  Video,
+  Camera,
+  Twitter,
+  Send,
 } from "lucide-react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
@@ -194,11 +204,77 @@ const MainLayout: FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t">
-        <div className="container py-6">
-          <p className="text-center text-sm text-muted-foreground">
-            © 2024 SERINE KAMAL. {t('common.allRightsReserved')}
-          </p>
+      <footer className="border-t bg-background/95">
+        <div className="container py-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Contact Information */}
+            <div className="space-y-2">
+              <h3 className="font-semibold text-lg">{t('common.contactInfo')}</h3>
+              <div className="space-y-1">
+                <p className="text-sm">Serine Kamal</p>
+                <p className="text-sm flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  +966 50 468 7644
+                </p>
+                <p className="text-sm flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  serine.k95@gmail.com
+                </p>
+              </div>
+            </div>
+
+            {/* Social Media Links - Column 1 */}
+            <div className="space-y-2">
+              <h3 className="font-semibold text-lg">{t('common.followUs')}</h3>
+              <div className="space-y-1">
+                <a href="https://www.facebook.com/Sk.Serine" target="_blank" rel="noopener noreferrer" 
+                   className="text-sm hover:text-primary flex items-center gap-2">
+                  <Facebook className="h-4 w-4" />Facebook
+                </a>
+                <a href="https://www.linkedin.com/in/serine-kamal-912458175" target="_blank" rel="noopener noreferrer"
+                   className="text-sm hover:text-primary flex items-center gap-2">
+                  <Linkedin className="h-4 w-4" />LinkedIn
+                </a>
+                <a href="https://www.behance.net/serinek" target="_blank" rel="noopener noreferrer"
+                   className="text-sm hover:text-primary flex items-center gap-2">
+                  <Paintbrush className="h-4 w-4" />Behance
+                </a>
+                <a href="https://youtube.com/@serine.k95" target="_blank" rel="noopener noreferrer"
+                   className="text-sm hover:text-primary flex items-center gap-2">
+                  <Youtube className="h-4 w-4" />YouTube
+                </a>
+              </div>
+            </div>
+
+            {/* Social Media Links - Column 2 */}
+            <div className="space-y-2">
+              <h3 className="font-semibold text-lg">{t('common.moreLinks')}</h3>
+              <div className="space-y-1">
+                <a href="https://www.tiktok.com/@serine.k95" target="_blank" rel="noopener noreferrer"
+                   className="text-sm hover:text-primary flex items-center gap-2">
+                  <Video className="h-4 w-4" />TikTok
+                </a>
+                <a href="https://snapchat.com/t/UnmaBwEb" target="_blank" rel="noopener noreferrer"
+                   className="text-sm hover:text-primary flex items-center gap-2">
+                  <Camera className="h-4 w-4" />Snapchat
+                </a>
+                <a href="https://twitter.com/Serine_95" target="_blank" rel="noopener noreferrer"
+                   className="text-sm hover:text-primary flex items-center gap-2">
+                  <Twitter className="h-4 w-4" />Twitter
+                </a>
+                <a href="https://t.me/Sk_serine" target="_blank" rel="noopener noreferrer"
+                   className="text-sm hover:text-primary flex items-center gap-2">
+                  <Send className="h-4 w-4" />Telegram
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 pt-4 border-t">
+            <p className="text-center text-sm text-muted-foreground">
+              © 2024 SERINE KAMAL. {t('common.allRightsReserved')}
+            </p>
+          </div>
         </div>
       </footer>
     </div>
