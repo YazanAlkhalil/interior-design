@@ -43,7 +43,7 @@ export default function ResetPasswordOTP() {
 
   const handleResendOTP = async () => {
     try {
-      const res = await fetch('http://45.9.191.191/api/v1//password-reset-request//', {
+      const res = await fetch('https://serinek.com/api/v1//password-reset-request//', {
         method: "POST",
         headers: {
           'Content-Type': 'application/json',
@@ -68,7 +68,7 @@ export default function ResetPasswordOTP() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-        const res = await fetch('http://45.9.191.191/api/v1/password-reset-verify/', {
+        const res = await fetch('https://serinek.com/api/v1/password-reset-verify/', {
           method: "POST",
           headers: {
             'Content-Type': 'application/json',

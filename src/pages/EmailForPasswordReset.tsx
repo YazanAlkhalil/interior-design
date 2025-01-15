@@ -20,7 +20,7 @@ const EmailForPasswordReset: React.FC = () => {
 
     try {
       // Replace this with your actual API call
-      const response = await fetch(`http://45.9.191.191/api/v1/password-reset-request/`, {
+      const response = await fetch(`https://serinek.com/api/v1/password-reset-request/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -8,7 +8,7 @@ import {
 import { Product } from "../components/shared/Product"
 import { useNavigate } from "react-router-dom"
 import { motion, useInView } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense, lazy } from "react";
 import BlackBoxProduct from "../components/shared/BlackBoxProduct";
 import { useAuthenticatedFetch } from "../hooks/useAuthenticatedFetch";
 import { useLanguage } from "../context/LanguageContext";
@@ -18,10 +18,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../components/ui/dialog";
+import { Canvas } from '@react-three/fiber'
+import { OrbitControls } from '@react-three/drei'
+import { PanoramaViewer } from '../components/PanoramaViewer'
 // import serviceImage from '../assets/images/2.jpg'
 // Mock data for services
 
-
+// Create a lazy-loaded version of the panorama component
+const LazyPanorama = lazy(() => Promise.resolve({
+  default: ({ imageUrl }: { imageUrl: string }) => (
+    <Canvas camera={{ position: [0, 0, 0.1] }}>
+      <PanoramaViewer imageUrl={imageUrl} />
+      <OrbitControls 
+        enableZoom={false}
+        enablePan={false}
+        rotateSpeed={-0.5}
+      />
+    </Canvas>
+  )
+}));
 
 export const Home = () => {
   const navigate = useNavigate()
@@ -190,6 +205,43 @@ export const Home = () => {
     fetchDesigns();
   }, []);
 
+  const panoramas = [
+    {
+      title: t('home.bathroom360'),
+      imageUrl: require('../assets/images/360/1_CShading_LightMix.jpg'),
+      description: t('home.bathroom360Description')
+    },
+    {
+      title: t('home.wardrobe360'),
+      imageUrl: require('../assets/images/360/3600.jpg'),
+      description: t('home.wardrobe360Description')
+    },
+    {
+      title: t('home.bedroom360'),
+      imageUrl: require('../assets/images/360/2_CShading_LightMix.jpg'),
+      description: t('home.bedroom360Description')
+    },
+    {
+      title: t('home.office360'),
+      imageUrl: require('../assets/images/360/4.jpg'),
+      description: t('home.office360Description')
+    },
+  ];
+
+  // Create individual refs and inView states with correct options
+  const ref1 = useRef(null);
+  const ref2 = useRef(null);
+  const ref3 = useRef(null);
+  const ref4 = useRef(null);
+
+  const isInView1 = useInView(ref1, { once: true, amount: 0.1 });
+  const isInView2 = useInView(ref2, { once: true, amount: 0.1 });
+  const isInView3 = useInView(ref3, { once: true, amount: 0.1 });
+  const isInView4 = useInView(ref4, { once: true, amount: 0.1 });
+
+  const refs = [ref1, ref2, ref3, ref4];
+  const inViewStates = [isInView1, isInView2, isInView3, isInView4];
+
   return (
     <motion.div 
       className="container mx-auto px-4 py-8"
@@ -235,6 +287,40 @@ export const Home = () => {
           <CarouselPrevious />
           <CarouselNext />
         </Carousel>
+      </motion.section>
+
+      {/* 360 Views Section */}
+      <motion.section className="mb-16" variants={itemVariants}>
+        <h2 className="text-2xl font-bold mb-6">{t('home.virtualTours')}</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {panoramas.map((panorama, index) => (
+            <motion.div 
+              key={index}
+              ref={refs[index]}
+              className="h-[400px] rounded-lg overflow-hidden relative"
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <div className="absolute inset-0">
+                {inViewStates[index] ? (
+                  <Suspense fallback={
+                    <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                      <div className="text-gray-500">Loading panorama...</div>
+                    </div>
+                  }>
+                    <LazyPanorama imageUrl={panorama.imageUrl} />
+                  </Suspense>
+                ) : (
+                  <div className="w-full h-full bg-gray-100" />
+                )}
+              </div>
+              <div className="bg-black bg-opacity-50 text-white p-4 absolute bottom-0 left-0 right-0 z-10">
+                <h3 className="font-semibold text-lg">{panorama.title}</h3>
+                <p className="text-sm">{panorama.description}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </motion.section>
 
       {/* Top Products Section */}

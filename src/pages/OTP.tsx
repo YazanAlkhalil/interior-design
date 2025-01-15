@@ -40,7 +40,7 @@ export default function OTPVerification() {
 
   const handleResendOTP = async () => {
     try {
-      const res = await fetch('http://45.9.191.191/api/v1/resend-otp/', {
+      const res = await fetch('https://serinek.com/api/v1/resend-otp/', {
         method: "POST",
         headers: {
           'Content-Type': 'application/json',
@@ -65,7 +65,7 @@ export default function OTPVerification() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-        const res = await fetch('http://45.9.191.191/api/v1/verification/', {
+        const res = await fetch('https://serinek.com/api/v1/verification/', {
           method: "POST",
           headers: {
             'Content-Type': 'application/json',

@@ -33,7 +33,7 @@ export default function SignUp() {
 
     if (email && password && firstName && lastName && phone && address) {
       try {
-        const res = await fetch('http://45.9.191.191/api/v1/register/', {
+        const res = await fetch('https://serinek.com/api/v1/register/', {
           method: "POST",
           headers: {
             'Content-Type': 'application/json',

@@ -12,7 +12,7 @@ export const useAuthenticatedFetch = () => {
   const refreshAccessToken = async () => {
     try {
       const refresh = localStorage.getItem('refresh');
-      const response = await fetch('https://45.9.191.191/api/v1/refresh/', {
+      const response = await fetch('https://serinek.com/api/v1/refresh/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -52,7 +52,7 @@ export const useAuthenticatedFetch = () => {
       };
 
       // First attempt with current access token
-      const response = await fetch(`http://45.9.191.191/api/v1/${url}`, {
+      const response = await fetch(`https://serinek.com/api/v1/${url}`, {
         ...options,
         headers: {
           ...headers,
@@ -63,7 +63,7 @@ export const useAuthenticatedFetch = () => {
       if (response.status === 401) {
         accessToken = await refreshAccessToken();
         console.log('need refresh')
-        const retryResponse = await fetch(`http://45.9.191.191/api/v1/${url}`, {
+        const retryResponse = await fetch(`https://serinek.com/api/v1/${url}`, {
           ...options,
           headers: {
             ...options.headers,

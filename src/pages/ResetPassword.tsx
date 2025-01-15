@@ -25,7 +25,7 @@ export default function ResetPassword() {
       return;
     }
     e.preventDefault()
-    const res = await fetch(`http://45.9.191.191/api/v1/password-reset/`, {
+    const res = await fetch(`https://serinek.com/api/v1/password-reset/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
